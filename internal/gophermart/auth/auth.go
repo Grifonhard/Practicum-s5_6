@@ -14,13 +14,13 @@ const (
 	EXPIREDAT = 30 //время за которое токен истекает в минутах
 )
 
-type AuthManager struct {
+type Manager struct {
 	s *storage.Storage
 	key []byte
 }
 
-func New(stor *storage.Storage) (*AuthManager, error) {
-	var m AuthManager
+func New(stor *storage.Storage) (*Manager, error) {
+	var m Manager
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
 	if err != nil {
@@ -38,7 +38,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func (m *AuthManager) Registration(username, password string) (string, error) {
+func (m *Manager) Registration(username, password string) (string, error) {
 	var user storage.User
 	hashPw, err := hashPassword(password)
 	if err != nil {
@@ -58,7 +58,7 @@ func (m *AuthManager) Registration(username, password string) (string, error) {
 	return token, nil
 }
 
-func (m *AuthManager) Login(username, password string) (string, error) {
+func (m *Manager) Login(username, password string) (string, error) {
 	user, err := m.s.GetUser(username)
 	if err != nil {
 		return "", err
@@ -73,7 +73,7 @@ func (m *AuthManager) Login(username, password string) (string, error) {
 	return token, nil
 }
 
-func (m *AuthManager) Authentication(token string) error {
+func (m *Manager) Authentication(token string) error {
 	claims, err := m.decodeToken(token)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (m *AuthManager) Authentication(token string) error {
 	return err
 }
 
-func (m *AuthManager) createToken(username, password string) (string, error) {
+func (m *Manager) createToken(username, password string) (string, error) {
 	expirationTime := time.Now().Add(EXPIREDAT * time.Minute)
 
 	claims := &Claims{
@@ -102,7 +102,7 @@ func (m *AuthManager) createToken(username, password string) (string, error) {
 	return tokenS, nil
 }
 
-func (m *AuthManager) decodeToken(tokenS string) (*Claims, error) {
+func (m *Manager) decodeToken(tokenS string) (*Claims, error) {
 	claims := &Claims{}
 
 	token, err := jwt.ParseWithClaims(tokenS, claims, func(t *jwt.Token) (interface{}, error) {
