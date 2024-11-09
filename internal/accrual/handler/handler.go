@@ -30,7 +30,5 @@ func NewHandler(c *Config) {
 
 	g := c.Router.Group("/api")
 
-	g.POST("/signup", h.Signup)
-	g.POST("/signin", h.Signin)
-	g.POST("/tokens", h.Tokens)
+	g.POST("/user/orders", h.CreateOrderHandler)
 }
