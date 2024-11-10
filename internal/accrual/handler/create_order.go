@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,12 +10,12 @@ import (
 	"github.com/Grifonhard/Practicum-s5_6/internal/accrual/model"
 )
 
-type createOrderRequest struct {
+type newOrderRegistrationRequest struct {
 	Number uint64 `json:"number"`
 }
 
-func (h *Handler) CreateOrderHandler(c *gin.Context) {
-	var req createOrderRequest
+func (h *Handler) NewOrderRegistrationHandler(c *gin.Context) {
+	var req newOrderRegistrationRequest
 
 	//if ok := bindData(c, &req); !ok {
 	//    return
@@ -29,7 +29,7 @@ func (h *Handler) CreateOrderHandler(c *gin.Context) {
 	err := h.OrderService.CreateOrder(ctx, o)
 
 	if err != nil {
-		log.Printf("Failed to sign in user: %v\n", err.Error())
+		slog.ErrorContext(ctx, "new order registration", "err", err)
 		c.JSON(errors.Status(err), gin.H{
 			"error": err,
 		})
