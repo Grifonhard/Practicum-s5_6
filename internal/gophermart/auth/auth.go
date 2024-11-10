@@ -16,7 +16,7 @@ const (
 
 type Manager struct {
 	s *storage.Storage
-	key []byte
+	secretKey []byte
 }
 
 func New(stor *storage.Storage) (*Manager, error) {
@@ -27,12 +27,13 @@ func New(stor *storage.Storage) (*Manager, error) {
 		return nil, err
 	}
 
-	m.key = key
+	m.secretKey = key
 	m.s = stor
 
 	return &m, nil
 }
 
+// TODO TokenClaims
 type Claims struct {
 	Username string `json:"username"`
 	jwt.RegisteredClaims
@@ -94,7 +95,7 @@ func (m *Manager) createToken(username, password string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenS, err := token.SignedString(m.key)
+	tokenS, err := token.SignedString(m.secretKey)
 	if err != nil {
 		return "", err
 	}
@@ -109,7 +110,7 @@ func (m *Manager) decodeToken(tokenS string) (*Claims, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
             return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
         }
-		return m.key, nil
+		return m.secretKey, nil
 	})
 
 	if err != nil {

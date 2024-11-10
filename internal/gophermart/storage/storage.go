@@ -19,14 +19,14 @@ func New() (*Storage, error) {
 	return &stor, nil
 }
 
-func (stor *Storage) NewUser(user User) error {
-	for _, u := range stor.userStor {
+func (s *Storage) NewUser(user User) error {
+	for _, u := range s.userStor {
 		if u.Username == user.Username {
 			return ErrUserExist
 		}
 	}
-	user.Id = len(stor.userStor) + 1
-	stor.userStor[user.Id] = user
+	user.Id = len(s.userStor) + 1
+	s.userStor[user.Id] = user
 	return nil
 }
 

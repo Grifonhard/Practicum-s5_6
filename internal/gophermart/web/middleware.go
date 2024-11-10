@@ -22,11 +22,13 @@ func Authentication(am *auth.Manager) gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			c.Abort()
 			return
-		} else if err == storage.ErrUserNotExist {
+		} 
+		if err == storage.ErrUserNotExist {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			c.Abort()
 			return
-		} else if err != nil {
+		}
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal"})
 			c.Abort()
 			return

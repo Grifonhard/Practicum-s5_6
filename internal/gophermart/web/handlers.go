@@ -31,7 +31,8 @@ func Registration(m *auth.Manager) gin.HandlerFunc {
 			return
 		}
 
-		c.Header("Authorization", token)
+		// c.Header("Authorization", token)
+		// TODO передаём в тело
 		c.JSON(http.StatusOK, gin.H{"message": "User registered and authenticated"})
 	}
 }
@@ -54,7 +55,8 @@ func Login(m *auth.Manager) gin.HandlerFunc {
 			return
 		}
 
-		c.Header("Authorization", token)
+		// c.Header("Authorization", token)
+		// TODO передаём в тело
 		c.JSON(http.StatusOK, gin.H{"message": "User registered and authenticated"})
 	}
 }
