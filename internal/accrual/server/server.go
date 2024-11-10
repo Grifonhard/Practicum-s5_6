@@ -30,7 +30,12 @@ func Run() {
 		panic(err)
 	}
 
-	err = postgres.Bootstrap(ctx, db)
+	err = postgres.CreateSchema(ctx, db)
+	if err != nil {
+		panic(err)
+	}
+
+	err = postgres.CreateTables(ctx, db)
 	if err != nil {
 		panic(err)
 	}

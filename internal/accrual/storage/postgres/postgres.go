@@ -19,17 +19,28 @@ func NewConnection(cfg *config.PostgresConfig) (*pgx.Conn, error) {
 	return conn, nil
 }
 
-func Bootstrap(ctx context.Context, db *pgx.Conn) error {
+func CreateSchema(ctx context.Context, db *pgx.Conn) error {
 	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		return err
-	}
-
 	defer tx.Rollback(ctx)
+
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
 
 	_, err = tx.Exec(ctx, `CREATE SCHEMA IF NOT EXISTS accrual`)
 	if err != nil {
 		return fmt.Errorf("create schema: %w", err)
+	}
+
+	return tx.Commit(ctx)
+}
+
+func CreateTables(ctx context.Context, db *pgx.Conn) error {
+	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+	defer tx.Rollback(ctx)
+
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
 	}
 
 	_, err = tx.Exec(ctx, `
@@ -55,7 +66,7 @@ func Bootstrap(ctx context.Context, db *pgx.Conn) error {
         );
     `)
 	if err != nil {
-		return fmt.Errorf("create table: %w", err)
+		return fmt.Errorf("create tables: %w", err)
 	}
 
 	return tx.Commit(ctx)

@@ -6,7 +6,7 @@ import (
 )
 
 type orderRepository interface {
-	Create(ctx context.Context, o *model.Order) error
+	RegisterOrder(context.Context, uint64, []model.Good) error
 }
 
 type OrderService struct {
@@ -17,6 +17,6 @@ func NewOrderService(repo orderRepository) *OrderService {
 	return &OrderService{repo: repo}
 }
 
-func (u *OrderService) CreateOrder(ctx context.Context, o *model.Order) error {
-	return u.repo.Create(ctx, o)
+func (u *OrderService) RegisterOrder(ctx context.Context, number uint64, goods []model.Good) error {
+	return u.repo.RegisterOrder(ctx, number, goods)
 }

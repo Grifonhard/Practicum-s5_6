@@ -18,7 +18,7 @@ func NewHandler(router *gin.Engine, orderService *service.OrderService) {
 
 	g := h.Router.Group("/api")
 
-	g.GET("/orders/:number", h.NewOrderRegistrationHandler)
-	g.POST("/orders", h.NewOrderRegistrationHandler)
-	g.POST("/goods", h.NewOrderRegistrationHandler)
+	g.GET("/orders/:number", h.OrderRegistrationHandler)
+	g.POST("/orders", h.OrderRegistrationHandler)
+	g.POST("/goods", h.OrderRegistrationHandler)
 }
