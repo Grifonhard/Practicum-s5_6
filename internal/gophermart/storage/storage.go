@@ -1,40 +1,34 @@
 package storage
 
-import "time"
+import (
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/drivers/psql"
+	"github.com/Grifonhard/Practicum-s5_6/internal/model"
+)
 
 type Storage struct {
-	userStor map[int]User
+	db *psql.DB
 }
 
-type User struct {
-	Id            int
-	Username      string
-	Password_hash string
-	Created       time.Time
-}
-
-func New() (*Storage, error) {
+func New(uri string) (*Storage, error) {
 	var stor Storage
-	stor.userStor = make(map[int]User)
+	var err error
+	stor.db, err = psql.New(uri)
+	if err != nil {
+		return nil, err
+	}
 	return &stor, nil
 }
 
-func (s *Storage) NewUser(user User) error {
-	for _, u := range s.userStor {
-		if u.Username == user.Username {
-			return ErrUserExist
-		}
-	}
-	user.Id = len(s.userStor) + 1
-	s.userStor[user.Id] = user
-	return nil
+func (s *Storage) NewUser(user model.User) error {
+	err := s.db.InsertUser(user.Username, user.Password_hash)
+	return err
 }
 
-func (stor *Storage) GetUser(uname string) (*User, error) {
-	for _, u := range stor.userStor {
-		if u.Username == uname {
-			return &u, nil
-		}
+func (s *Storage) GetUser(uname string) (*model.User, error) {
+	user, err := s.db.GetUser(uname)
+	if err != nil {
+		return nil, err
 	}
-	return nil, ErrUserNotExist
+	return user, nil
 }
+

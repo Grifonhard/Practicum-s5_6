@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/model"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -40,7 +41,7 @@ type Claims struct {
 }
 
 func (m *Manager) Registration(username, password string) (string, error) {
-	var user storage.User
+	var user model.User
 	hashPw, err := hashPassword(password)
 	if err != nil {
 		return "", err

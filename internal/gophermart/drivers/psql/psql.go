@@ -2,10 +2,12 @@ package psql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Grifonhard/Practicum-s5_6/internal/model"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -52,10 +54,16 @@ func (db *DB) CreateTables() error {
 func (db *DB) InsertUser(username, passwordHash string) error {
 	_, err := db.p.Exec(context.Background(),
 		"INSERT INTO User (username, password_hash) VALUES ($1, $2)", username, passwordHash)
+
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		return ErrUserExist
+	}
+
 	return err
 }
 
-func (db *DB) InsertOrder(userID, orderID int) error {	
+func (db *DB) InsertOrder(userID, orderID int) error {
 	_, err := db.p.Exec(context.Background(),
 		"INSERT INTO Order (user_id, order_id, status) VALUES ($1, $2, $3)", userID, orderID, 0)
 	return err
