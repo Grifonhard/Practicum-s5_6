@@ -44,3 +44,26 @@ func (r *OrderRepository) RegisterOrder(ctx context.Context, number uint64, good
 
 	return tx.Commit(ctx)
 }
+
+func (r *OrderRepository) GetOrderByNumber(ctx context.Context, number uint64) (*model.Order, error) {
+	query := "SELECT * FROM accrual.orders WHERE number = ($1) LIMIT 1"
+
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	defer tx.Rollback(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("begin transaction: %w", err)
+	}
+
+	_, err = tx.Exec(ctx, query, number, number)
+	if err != nil {
+		return nil, fmt.Errorf("select order: %w", err)
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("commit transaction: %w", err)
+	}
+
+	return &model.Order{}, nil
+}

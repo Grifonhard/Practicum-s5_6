@@ -41,11 +41,13 @@ func Run() {
 	}
 
 	orderRepository := repository.NewOrderRepository(db)
+	accrualRepository := repository.NewAccrualRepository(db)
 	orderService := service.NewOrderService(orderRepository)
+	accrualService := service.NewAccrualService(accrualRepository)
 
 	router := gin.Default()
 
-	handler.NewHandler(router, orderService)
+	handler.NewHandler(router, orderService, accrualService)
 
 	slog.Info("Connected to database", "uri", pgCfg.DatabaseURI)
 	slog.Info("Start server", "address", httpCfg.RunAddress)
