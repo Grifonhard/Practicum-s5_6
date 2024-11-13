@@ -8,6 +8,7 @@ import (
 type orderRepository interface {
 	RegisterOrder(context.Context, uint64, []model.Good) error
 	GetOrderByNumber(context.Context, uint64) (*model.Order, error)
+	ListRegisteredOrders(context.Context) ([]model.Order, error)
 }
 
 type OrderService struct {
@@ -18,10 +19,14 @@ func NewOrderService(repo orderRepository) *OrderService {
 	return &OrderService{repo: repo}
 }
 
-func (u *OrderService) RegisterOrder(ctx context.Context, number uint64, goods []model.Good) error {
-	return u.repo.RegisterOrder(ctx, number, goods)
+func (s *OrderService) RegisterOrder(ctx context.Context, number uint64, goods []model.Good) error {
+	return s.repo.RegisterOrder(ctx, number, goods)
 }
 
-func (u *OrderService) GetOrderByNumber(ctx context.Context, number uint64) (*model.Order, error) {
-	return u.repo.GetOrderByNumber(ctx, number)
+func (s *OrderService) GetOrderByNumber(ctx context.Context, number uint64) (*model.Order, error) {
+	return s.repo.GetOrderByNumber(ctx, number)
+}
+
+func (s *OrderService) ListRegisteredOrders(ctx context.Context) ([]model.Order, error) {
+	return s.repo.ListRegisteredOrders(ctx)
 }

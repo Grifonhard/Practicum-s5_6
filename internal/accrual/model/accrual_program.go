@@ -2,6 +2,11 @@ package model
 
 import "time"
 
+const (
+	RewardTypePercent = "%"
+	RewardTypePoints  = "pt"
+)
+
 type AccrualProgram struct {
 	ID         uint64    `db:"id" json:"-"`
 	Match      string    `db:"match" json:"match" required:"true"`

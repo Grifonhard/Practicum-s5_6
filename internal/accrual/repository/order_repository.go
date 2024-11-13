@@ -67,3 +67,25 @@ func (r *OrderRepository) GetOrderByNumber(ctx context.Context, number uint64) (
 
 	return &model.Order{}, nil
 }
+
+func (r *OrderRepository) ListRegisteredOrders(ctx context.Context) ([]model.Order, error) {
+	query := "SELECT * FROM accrual.orders WHERE status = ($1)"
+
+	rows, err := r.db.Query(ctx, query, model.OrderStatusRegistered)
+	if err != nil {
+		return nil, fmt.Errorf("select orders: %w", err)
+	}
+	defer rows.Close()
+
+	var orders []model.Order
+	for rows.Next() {
+		order := model.Order{}
+		err = rows.Scan(&order.Number, &order.Status, &order.Accrual, &order.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("unable to scan row: %w", err)
+		}
+		orders = append(orders, order)
+	}
+
+	return orders, nil
+}

@@ -42,8 +42,9 @@ func Run() {
 
 	orderRepository := repository.NewOrderRepository(db)
 	accrualRepository := repository.NewAccrualRepository(db)
+	goodRepository := repository.NewGoodRepository(db)
 	orderService := service.NewOrderService(orderRepository)
-	accrualService := service.NewAccrualService(accrualRepository)
+	accrualService := service.NewAccrualService(accrualRepository, orderRepository, goodRepository)
 
 	router := gin.Default()
 

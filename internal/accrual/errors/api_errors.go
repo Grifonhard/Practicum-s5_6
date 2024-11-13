@@ -13,6 +13,7 @@ const (
 	Internal           Type = "INTERNAL"            // Server (500) and fallback errors
 	NotFound           Type = "NOT_FOUND"           // For not finding resource
 	ServiceUnavailable Type = "SERVICE_UNAVAILABLE" // For long-running handlers
+	Conflict           Type = "CONFLICT"
 )
 
 type Error struct {
@@ -76,5 +77,13 @@ func NewServiceUnavailable() *Error {
 	return &Error{
 		Type:    ServiceUnavailable,
 		Message: fmt.Sprintf("Service unavailable or timed out"),
+	}
+}
+
+// NewConflict to create an error for 409
+func NewConflict(err error) *Error {
+	return &Error{
+		Type:    Conflict,
+		Message: err.Error(),
 	}
 }

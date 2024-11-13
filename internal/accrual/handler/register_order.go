@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgconn"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/accrual/errors"
+	errs "github.com/Grifonhard/Practicum-s5_6/internal/accrual/errors"
 	"github.com/Grifonhard/Practicum-s5_6/internal/accrual/model"
 )
 
@@ -27,8 +29,17 @@ func (h *Handler) OrderRegistrationHandler(c *gin.Context) {
 
 	if err != nil {
 		slog.ErrorContext(ctx, "order registration handle", "err", err)
-		c.JSON(errors.Status(err), gin.H{
-			"error": err,
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == errs.ErrPostgresUniqueViolation {
+			c.JSON(http.StatusConflict, gin.H{
+				"error": errs.NewConflict(err),
+			})
+			return
+		}
+
+		c.JSON(errs.Status(err), gin.H{
+			"error": err.Error(),
 		})
 		return
 	}

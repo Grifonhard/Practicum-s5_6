@@ -13,13 +13,13 @@ type AccrualRepository struct {
 	db *pgx.Conn
 }
 
-func NewAccrualRepository(db *pgx.Conn) *OrderRepository {
-	return &OrderRepository{
+func NewAccrualRepository(db *pgx.Conn) *AccrualRepository {
+	return &AccrualRepository{
 		db: db,
 	}
 }
 
-func (r *OrderRepository) RegisterAccrual(ctx context.Context, accrual model.AccrualProgram) error {
+func (r *AccrualRepository) RegisterAccrual(ctx context.Context, accrual model.AccrualProgram) error {
 	query := "INSERT INTO accrual.accrual_programs (match, reward, reward_type, created_at) VALUES ($1, $2, $3, $4)"
 
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
@@ -35,4 +35,8 @@ func (r *OrderRepository) RegisterAccrual(ctx context.Context, accrual model.Acc
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (r *AccrualRepository) MatchAccrualsByGoods(ctx context.Context, accrual model.AccrualProgram) error {
+	return nil
 }
