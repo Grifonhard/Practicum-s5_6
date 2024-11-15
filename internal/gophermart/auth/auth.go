@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/drivers/psql"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/storage"
-	"github.com/Grifonhard/Practicum-s5_6/internal/model"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,10 +17,11 @@ const (
 
 type Manager struct {
 	s *storage.Storage
+	p *psql.DB
 	secretKey []byte
 }
 
-func New(stor *storage.Storage) (*Manager, error) {
+func New(db *psql.DB, stor *storage.Storage) (*Manager, error) {
 	var m Manager
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
@@ -30,6 +31,7 @@ func New(stor *storage.Storage) (*Manager, error) {
 
 	m.secretKey = key
 	m.s = stor
+	m.p = db
 
 	return &m, nil
 }
@@ -41,15 +43,11 @@ type Claims struct {
 }
 
 func (m *Manager) Registration(username, password string) (string, error) {
-	var user model.User
 	hashPw, err := hashPassword(password)
 	if err != nil {
 		return "", err
 	}
-	user.Username = username
-	user.Password_hash = hashPw
-	user.Created = time.Now()
-	err = m.s.NewUser(user)
+	err = m.p.InsertUser(username, hashPw)
 	if err != nil {
 		return "", err
 	}
@@ -61,7 +59,7 @@ func (m *Manager) Registration(username, password string) (string, error) {
 }
 
 func (m *Manager) Login(username, password string) (string, error) {
-	user, err := m.s.GetUser(username)
+	user, err := m.p.GetUser(username)
 	if err != nil {
 		return "", err
 	}
@@ -80,7 +78,7 @@ func (m *Manager) Authentication(token string) error {
 	if err != nil {
 		return err
 	}
-	_, err = m.s.GetUser(claims.Username)
+	_, err = m.p.GetUser(claims.Username)
 	return err
 }
 

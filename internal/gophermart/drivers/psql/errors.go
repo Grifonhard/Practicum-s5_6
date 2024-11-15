@@ -8,4 +8,5 @@ var (
 	ErrOrdersNotFound = errors.New("orders not found")
 	ErrTransNotFound  = errors.New("transactions not found")
 	ErrUserExist      = errors.New("user exist already")
+	ErrOrderExist     = errors.New("order exist already")
 )

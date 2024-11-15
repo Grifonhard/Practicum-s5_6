@@ -5,30 +5,37 @@ import (
 	"github.com/Grifonhard/Practicum-s5_6/internal/model"
 )
 
+// TODO service layers
 type Storage struct {
 	db *psql.DB
 }
 
-func New(uri string) (*Storage, error) {
+func New(db *psql.DB) (*Storage, error) {
 	var stor Storage
-	var err error
-	stor.db, err = psql.New(uri)
-	if err != nil {
-		return nil, err
-	}
+	stor.db =db
 	return &stor, nil
 }
 
-func (s *Storage) NewUser(user model.User) error {
-	err := s.db.InsertUser(user.Username, user.Password_hash)
-	return err
+func (s *Storage) NewOrder(username string, orderId int) error {
+	user, err := s.db.GetUser(username)
+	if err != nil {
+		return err
+	}
+	err = s.db.InsertOrder(user.Id, orderId)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (s *Storage) GetUser(uname string) (*model.User, error) {
-	user, err := s.db.GetUser(uname)
+func (s *Storage) GetOrders(username string) ([]model.Order, error) {
+	user, err := s.db.GetUser(username)
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
+	orders, err := s.db.GetOrders(user.Id)
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
 }
-
