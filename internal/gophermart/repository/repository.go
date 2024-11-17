@@ -1,6 +1,4 @@
-package psql
-
-// TODO data mapper (repository)
+package repository
 
 import (
 	"context"
