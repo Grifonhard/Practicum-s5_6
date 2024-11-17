@@ -60,13 +60,13 @@ func CreateTables(ctx context.Context, db *pgxpool.Pool) error {
         );
         CREATE TABLE IF NOT EXISTS accrual.accrual_programs (
             id SERIAL PRIMARY KEY,
-            match character varying(255) NOT NULL UNIQUE,
+            match character varying(255) NOT NULL UNIQUE CHECK (char_length(match) > 0),
             reward int NOT NULL,
             reward_type character varying(255) NOT NULL,
             created_at timestamp with time zone
         );
     `)
-	// TODO: Добавить чек на длину поля match, что длина больше 0
+
 	if err != nil {
 		return fmt.Errorf("create tables: %w", err)
 	}

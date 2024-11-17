@@ -2,8 +2,10 @@ package handler
 
 import (
 	"errors"
+	"github.com/Grifonhard/Practicum-s5_6/internal/lib/validate"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -25,6 +27,16 @@ func (h *Handler) OrderRegistrationHandler(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
+
+	number := strconv.FormatUint(req.Order, 10)
+
+	if ok := validate.CheckLuhn(number); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid order",
+		})
+		return
+	}
+
 	err := h.OrderService.RegisterOrder(ctx, req.Order, req.Goods)
 
 	if err != nil {
