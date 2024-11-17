@@ -24,7 +24,8 @@ func NewHandler(
 
 	g := h.Router.Group("/api")
 
-	g.GET("/orders/:number", h.GetAccrualsCalculationHandler)
+	g.GET("/orders/:number", h.GetOrderHandler)
 	g.POST("/orders", h.OrderRegistrationHandler)
 	g.POST("/goods", h.AccrualRegistrationHandler)
+	g.GET("/orders", h.GetOrdersHandler)
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgconn"
 
-	errs "github.com/Grifonhard/Practicum-s5_6/internal/accrual/errors"
 	"github.com/Grifonhard/Practicum-s5_6/internal/accrual/model"
+	errs "github.com/Grifonhard/Practicum-s5_6/internal/lib/errors"
 )
 
 type accrualRegistrationRequest struct {

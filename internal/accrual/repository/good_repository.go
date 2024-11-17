@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/Grifonhard/Practicum-s5_6/internal/accrual/model"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type GoodRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewGoodRepository(db *pgx.Conn) *GoodRepository {
+func NewGoodRepository(db *pgxpool.Pool) *GoodRepository {
 	return &GoodRepository{
 		db: db,
 	}
@@ -29,7 +29,7 @@ func (r *GoodRepository) GetGoodsByOrderNumbers(ctx context.Context, numbers []u
 	var goods []model.Good
 	for rows.Next() {
 		good := model.Good{}
-		err = rows.Scan(&good.ID, &good.Description, &good.Price, &good.OrderID, &good.CreatedAt)
+		err = rows.Scan(&good.ID, &good.Description, &good.Price, &good.OrderNumber, &good.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("unable to scan row: %w", err)
 		}

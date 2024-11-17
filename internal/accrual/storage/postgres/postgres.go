@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/Grifonhard/Practicum-s5_6/internal/accrual/config"
-	"github.com/Grifonhard/Practicum-s5_6/internal/accrual/errors"
+	"github.com/Grifonhard/Practicum-s5_6/internal/lib/errors"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewConnection(cfg *config.PostgresConfig) (*pgx.Conn, error) {
+func NewConnection(cfg *config.PostgresConfig) (*pgxpool.Pool, error) {
 	connCtx, cancel := context.WithTimeoutCause(context.Background(), cfg.ConnectTimeout, errors.ErrConnectTimeout)
 	defer cancel()
-	conn, err := pgx.Connect(connCtx, cfg.DatabaseURI)
+	conn, err := pgxpool.New(connCtx, cfg.DatabaseURI)
 	if err != nil {
 		return nil, fmt.Errorf("postgres connect: %w", err)
 	}
@@ -19,7 +20,7 @@ func NewConnection(cfg *config.PostgresConfig) (*pgx.Conn, error) {
 	return conn, nil
 }
 
-func CreateSchema(ctx context.Context, db *pgx.Conn) error {
+func CreateSchema(ctx context.Context, db *pgxpool.Pool) error {
 	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
 	defer tx.Rollback(ctx)
 
@@ -35,7 +36,7 @@ func CreateSchema(ctx context.Context, db *pgx.Conn) error {
 	return tx.Commit(ctx)
 }
 
-func CreateTables(ctx context.Context, db *pgx.Conn) error {
+func CreateTables(ctx context.Context, db *pgxpool.Pool) error {
 	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
 	defer tx.Rollback(ctx)
 
@@ -65,6 +66,7 @@ func CreateTables(ctx context.Context, db *pgx.Conn) error {
             created_at timestamp with time zone
         );
     `)
+	// TODO: Добавить чек на длину поля match, что длина больше 0
 	if err != nil {
 		return fmt.Errorf("create tables: %w", err)
 	}
@@ -72,12 +74,6 @@ func CreateTables(ctx context.Context, db *pgx.Conn) error {
 	return tx.Commit(ctx)
 }
 
-func Close(db *pgx.Conn) error {
-	err := db.Close(context.Background())
-
-	if err != nil {
-		return fmt.Errorf("postgres close: %w", err)
-	}
-
-	return nil
+func Close(db *pgxpool.Pool) {
+	db.Close()
 }

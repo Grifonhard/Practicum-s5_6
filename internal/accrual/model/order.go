@@ -15,3 +15,13 @@ type Order struct {
 	Accrual   *uint64   `db:"accrual" json:"accrual"`
 	CreatedAt time.Time `db:"created_at" json:"-"`
 }
+
+type OrderWithGoods struct {
+	Order
+	Goods []Good `db:"-" json:"goods"`
+}
+
+type OrderGood struct {
+	Order Order
+	Good  Good
+}

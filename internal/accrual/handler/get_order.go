@@ -1,20 +1,20 @@
 package handler
 
 import (
-	"github.com/Grifonhard/Practicum-s5_6/internal/accrual/errors"
+	"github.com/Grifonhard/Practicum-s5_6/internal/lib/errors"
 	"github.com/gin-gonic/gin"
 	"log/slog"
 	"net/http"
 	"strconv"
 )
 
-func (h *Handler) GetAccrualsCalculationHandler(c *gin.Context) {
+func (h *Handler) GetOrderHandler(c *gin.Context) {
 	num := c.Param("number")
 	ctx := c.Request.Context()
 
 	number, err := strconv.ParseUint(num, 10, 64)
 	if err != nil {
-		slog.ErrorContext(ctx, "order registration handle", "err", err)
+		slog.ErrorContext(ctx, "get order handle", "err", err)
 		c.JSON(errors.Status(err), gin.H{
 			"error": err,
 		})
@@ -24,7 +24,7 @@ func (h *Handler) GetAccrualsCalculationHandler(c *gin.Context) {
 	order, err := h.OrderService.GetOrderByNumber(ctx, number)
 
 	if err != nil {
-		slog.ErrorContext(ctx, "order registration handle", "err", err)
+		slog.ErrorContext(ctx, "get order handle", "err", err)
 		c.JSON(errors.Status(err), gin.H{
 			"error": err,
 		})
@@ -33,7 +33,7 @@ func (h *Handler) GetAccrualsCalculationHandler(c *gin.Context) {
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"order":   order.Number,
-		"status":  "PROCESSED",
-		"accrual": 0,
+		"status":  order.Status,
+		"accrual": order.Accrual,
 	})
 }

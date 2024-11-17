@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
 
 	"github.com/Grifonhard/Practicum-s5_6/internal/accrual/model"
 )
 
 type AccrualRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewAccrualRepository(db *pgx.Conn) *AccrualRepository {
+func NewAccrualRepository(db *pgxpool.Pool) *AccrualRepository {
 	return &AccrualRepository{
 		db: db,
 	}
@@ -37,6 +38,25 @@ func (r *AccrualRepository) RegisterAccrual(ctx context.Context, accrual model.A
 	return tx.Commit(ctx)
 }
 
-func (r *AccrualRepository) MatchAccrualsByGoods(ctx context.Context, accrual model.AccrualProgram) error {
-	return nil
+func (r *AccrualRepository) GetAllAccrualPrograms(ctx context.Context) ([]model.AccrualProgram, error) {
+	query := "SELECT * FROM accrual.accrual_programs"
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("select accruals: %w", err)
+	}
+
+	var accruals []model.AccrualProgram
+	for rows.Next() {
+		accrual := model.AccrualProgram{}
+		err = rows.Scan(&accrual.ID, &accrual.Match, &accrual.Reward, &accrual.RewardType, &accrual.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("unable to scan row: %w", err)
+		}
+		accruals = append(accruals, accrual)
+	}
+
+	rows.Close()
+
+	return accruals, nil
 }
