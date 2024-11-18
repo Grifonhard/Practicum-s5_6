@@ -4,8 +4,8 @@ import "strconv"
 
 type OrderAccrual struct {
 	OrderId string `json:"order"`
-	Status string `json:"status"`
-	Accrual int `json:"accrual"`
+	Status  string `json:"status"`
+	Accrual int    `json:"accrual"`
 }
 
 func (o *Order) ConvertAccrual(oA *OrderAccrual) (int, int, error) {

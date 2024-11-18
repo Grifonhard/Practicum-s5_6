@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"strconv"
+
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/model"
 )
@@ -63,4 +65,34 @@ func (s *Storage) GetTransactions(username string) ([]model.BalanceTransactions,
 		return nil, err
 	}
 	return transs, nil
+}
+
+func (s *Storage) GetTransactionsByOrder(order string) ([]model.BalanceTransactions, error) {
+	orderint, err := strconv.Atoi(order)
+	if err != nil {
+		return nil, err
+	}
+
+	ts, err := s.db.GetTransactionsByOrder(orderint)
+	if err != nil {
+		return nil, err
+	}
+
+	return ts, nil
+}
+
+func (s *Storage) Withdraw(username, order string, sum int) error {
+	user, err := s.db.GetUser(username)
+	if err != nil {
+		return err
+	}
+
+	orderint, err := strconv.Atoi(order)
+	if err != nil {
+		return err
+	}
+
+	sum *= (-1)
+
+	return s.db.InsertBalanceTransaction(user.Id, orderint, sum)
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/accrual"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/order/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/order/transactions"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/model"
 )
@@ -17,6 +18,7 @@ type Manager struct {
 	s *storage.Storage
 	a *accrual.Manager
 	r *repository.DB
+	muT *transactions.Mutex
 }
 
 func New(r *repository.DB, acm *accrual.Manager) (*Manager, error) {
@@ -27,6 +29,12 @@ func New(r *repository.DB, acm *accrual.Manager) (*Manager, error) {
 		return nil, err
 	}
 	m.s = stor
+
+	mu, err := transactions.New()
+	if err != nil {
+		return nil, err
+	}
+	m.muT = mu
 
 	m.a = acm
 	m.r = r
@@ -83,7 +91,7 @@ func (m *Manager) ListOrders(username string) ([]model.OrderDto, error) {
 	return ordersFront, err
 }
 
-func (m *Manager) Balance(username string) (int, error) {
+func (m *Manager) Balance(username string) (*model.BalanceDto, error) {
 	err := m.updateOrdersInfo(username)
 	if err != nil {
 		logger.Error("fail update orders info: %v", err)
@@ -91,32 +99,79 @@ func (m *Manager) Balance(username string) (int, error) {
 
 	ts, err := m.s.GetTransactions(username)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	var sum int
+	var withdrawn int
 
 	for _, t := range ts {
 		sum += t.Sum
+		if sum < 0 {
+			withdrawn += t.Sum
+		}
 	}
 
-	return sum, nil
+	return &model.BalanceDto{
+		Current: sum,
+		Withdrawn: withdrawn,
+	}, nil
 }
 
 func (m *Manager) Withdraw(username, order string, sum int) error {
-	err := m.updateOrdersInfo(username)
+	m.muT.Lock(username)
+	defer m.muT.Unlock(username)
+
+	balance, err := m.Balance(username)
 	if err != nil {
-		logger.Error("fail update orders info: %v", err)
+		return err
+	}
+	if balance.Current < sum {
+		return ErrNotEnoughBalance
 	}
 
+	ts, err := m.s.GetTransactionsByOrder(order)
+	if err != nil {
+		return err
+	}
+
+	switch len(ts){
+	case 1:
+		// 1 заказ - 1 списание
+	case 2:
+		return ErrAlreadyDebited
+	default:
+		return ErrTooMuchTransact
+	}
+
+	return m.s.Withdraw(username, order, sum)
 }
 
-func (m *Manager) Withdrawls(username string) error {
+func (m *Manager) Withdrawls(username string) ([]model.WithdrawlDto, error) {
 	err := m.updateOrdersInfo(username)
 	if err != nil {
 		logger.Error("fail update orders info: %v", err)
 	}
 	
+	transs, err := m.s.GetTransactions(username)
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(transs, func(i, j int) bool {
+		return transs[i].Created.Before(transs[j].Created)
+	})
+
+	var result []model.WithdrawlDto
+
+	for _, t := range transs {
+		if t.Sum < 0 {
+			withdrawl := model.GetWithdrawFront(t.OrderId, t.Sum * (-1), t.Created)
+			result = append(result, *withdrawl)
+		}
+	}
+
+	return result, nil
 }
 
 func (m *Manager) convertToFrontOrder(o *model.Order) (*model.OrderDto, error) {

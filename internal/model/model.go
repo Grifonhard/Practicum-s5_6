@@ -8,10 +8,10 @@ import (
 
 // возможные статусы заказов
 const (
-	NEW = "NEW"
+	NEW        = "NEW"
 	PROCESSING = "PROCESSING"
-	INVALID = "INVALID"
-	PROCESSED = "PROCESSED"
+	INVALID    = "INVALID"
+	PROCESSED  = "PROCESSED"
 )
 
 // возможные статусы заказов в бд
