@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"strconv"
 	"time"
 )
@@ -8,7 +9,7 @@ import (
 type OrderDto struct {
 	Id         string `json:"number"`
 	Status     string `json:"status"`
-	Accrual    int    `json:"accrual"`
+	Accrual    int    `json:"-"`
 	UploadedAt string `json:"uploaded_at"`
 }
 
@@ -37,4 +38,44 @@ func GetWithdrawFront(order, sum int, processed time.Time) *WithdrawlDto {
 	w.Sum = sum
 	w.ProcessedAt = processed.Format(time.RFC3339)
 	return &w
+}
+
+func (o OrderDto) MarshalJSON() ([]byte, error) {
+	type Alias OrderDto
+	aux := struct {
+		Alias
+		Accrual *int `json:"accrual,omitempty"`
+	}{
+		Alias:   Alias(o),
+		Accrual: nil,
+	}
+
+	if o.Accrual != 0 {
+		aux.Accrual = &o.Accrual
+	}
+
+	return json.Marshal(aux)
+}
+
+// UnmarshalJSON - кастомное анмаршалирование
+func (o *OrderDto) UnmarshalJSON(data []byte) error {
+	type Alias OrderDto
+	aux := struct {
+		Alias
+		Accrual *int `json:"accrual"`
+	}{
+		Alias: Alias(*o),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if aux.Accrual != nil {
+		o.Accrual = *aux.Accrual
+	} else {
+		o.Accrual = 0
+	}
+
+	return nil
 }

@@ -3,9 +3,13 @@ package web
 import (
 	"net/http"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/auth"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/auth"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	USERNAME = "username"
 )
 
 func Authentication(am *auth.Manager) gin.HandlerFunc {
@@ -17,12 +21,12 @@ func Authentication(am *auth.Manager) gin.HandlerFunc {
 			return
 		}
 
-		err := am.Authentication(authHeader)
+		username, err := am.Authentication(authHeader)
 		if err == auth.ErrInvalidToken {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			c.Abort()
 			return
-		} 
+		}
 		if err == storage.ErrUserNotExist {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			c.Abort()
@@ -33,6 +37,8 @@ func Authentication(am *auth.Manager) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		c.Set(USERNAME, username)
 
 		c.Next()
 	}

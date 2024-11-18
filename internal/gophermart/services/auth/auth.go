@@ -83,13 +83,13 @@ func (m *Manager) Login(username, password string) (string, error) {
 	return token, nil
 }
 
-func (m *Manager) Authentication(token string) error {
+func (m *Manager) Authentication(token string) (string, error) {
 	claims, err := m.decodeToken(token)
 	if err != nil {
-		return err
+		return "", err
 	}
-	_, err = m.p.GetUser(claims.Username)
-	return err
+	user, err := m.p.GetUser(claims.Username)
+	return user.Username, err
 }
 
 func (m *Manager) createToken(username, password string) (string, error) {
