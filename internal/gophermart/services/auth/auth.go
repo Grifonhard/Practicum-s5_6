@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/golang-jwt/jwt/v5"
@@ -17,13 +16,12 @@ const (
 )
 
 type Manager struct {
-	s         *storage.Storage
 	p         *repository.DB
 	muT		  *transactions.Mutex
 	secretKey []byte
 }
 
-func New(db *repository.DB, t *transactions.Mutex, stor *storage.Storage) (*Manager, error) {
+func New(db *repository.DB, t *transactions.Mutex) (*Manager, error) {
 	var m Manager
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
@@ -33,7 +31,6 @@ func New(db *repository.DB, t *transactions.Mutex, stor *storage.Storage) (*Mana
 
 	m.muT = t
 	m.secretKey = key
-	m.s = stor
 	m.p = db
 
 	return &m, nil
