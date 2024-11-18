@@ -9,7 +9,7 @@ import (
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
-	"github.com/Grifonhard/Practicum-s5_6/internal/model"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
 )
 
 // TODO запись в логи при возникновении ошибок
@@ -21,20 +21,11 @@ type Manager struct {
 	muT *transactions.Mutex
 }
 
-func New(r *repository.DB, acm *accrual.Manager) (*Manager, error) {
+func New(r *repository.DB, t *transactions.Mutex, s *storage.Storage, acm *accrual.Manager) (*Manager, error) {
 	var m Manager
 
-	stor, err := storage.New(r)
-	if err != nil {
-		return nil, err
-	}
-	m.s = stor
-
-	mu, err := transactions.New()
-	if err != nil {
-		return nil, err
-	}
-	m.muT = mu
+	m.s = s
+	m.muT = t
 
 	m.a = acm
 	m.r = r

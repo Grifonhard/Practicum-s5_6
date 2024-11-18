@@ -7,7 +7,7 @@ import (
 
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
-	"github.com/Grifonhard/Practicum-s5_6/internal/model"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
 )
 
 // TODO service layers

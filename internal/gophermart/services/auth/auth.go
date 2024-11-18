@@ -23,7 +23,7 @@ type Manager struct {
 	secretKey []byte
 }
 
-func New(db *repository.DB, stor *storage.Storage) (*Manager, error) {
+func New(db *repository.DB, t *transactions.Mutex, stor *storage.Storage) (*Manager, error) {
 	var m Manager
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
@@ -31,11 +31,7 @@ func New(db *repository.DB, stor *storage.Storage) (*Manager, error) {
 		return nil, err
 	}
 
-	m.muT, err = transactions.New()
-	if err != nil {
-		return nil, err
-	}
-
+	m.muT = t
 	m.secretKey = key
 	m.s = stor
 	m.p = db

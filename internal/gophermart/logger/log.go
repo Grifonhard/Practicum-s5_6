@@ -6,6 +6,14 @@ import (
 	"os"
 )
 
+const (
+	DEBUG = "debug"
+	INFO = "info"
+	WARN = "warn"
+	ERROR = "error"
+	FATAL = "fatal"
+)
+
 type Logger struct {
 	zapLogger *zap.Logger
 }
@@ -40,15 +48,15 @@ func new(level string, logFilePath string) (*Logger, error) {
 // parseLogLevel - конвертирует строковый уровень логирования в zapcore.Level.
 func parseLogLevel(level string) zapcore.Level {
 	switch level {
-	case "debug":
+	case DEBUG:
 		return zapcore.DebugLevel
-	case "info":
+	case INFO:
 		return zapcore.InfoLevel
-	case "warn":
+	case WARN:
 		return zapcore.WarnLevel
-	case "error":
+	case ERROR:
 		return zapcore.ErrorLevel
-	case "fatal":
+	case FATAL:
 		return zapcore.FatalLevel
 	default:
 		return zapcore.InfoLevel

@@ -10,7 +10,7 @@ import (
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/auth"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/order"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
-	"github.com/Grifonhard/Practicum-s5_6/internal/model"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
 	"github.com/gin-gonic/gin"
 )
 

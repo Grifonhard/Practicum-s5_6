@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/model"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
 )
 
 type Manager struct {
