@@ -10,8 +10,8 @@ const (
 )
 
 type Mutex struct {
-	keys map[string] struct{}
-	mu sync.Mutex
+	keys map[string]struct{}
+	mu   sync.Mutex
 }
 
 func New() (*Mutex, error) {

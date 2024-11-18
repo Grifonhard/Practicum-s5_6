@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/order/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,12 +16,12 @@ const (
 )
 
 type Manager struct {
-	s *storage.Storage
-	p *psql.DB
+	s         *storage.Storage
+	p         *repository.DB
 	secretKey []byte
 }
 
-func New(db *psql.DB, stor *storage.Storage) (*Manager, error) {
+func New(db *repository.DB, stor *storage.Storage) (*Manager, error) {
 	var m Manager
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
@@ -107,18 +107,18 @@ func (m *Manager) decodeToken(tokenS string) (*Claims, error) {
 
 	token, err := jwt.ParseWithClaims(tokenS, claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-            return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
-        }
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
 		return m.secretKey, nil
 	})
 
 	if err != nil {
-        return nil, err
-    }
+		return nil, err
+	}
 
 	if !token.Valid {
-        return nil, ErrInvalidToken
-    }
+		return nil, ErrInvalidToken
+	}
 
 	return claims, nil
 }

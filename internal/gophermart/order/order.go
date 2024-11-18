@@ -15,9 +15,9 @@ import (
 // TODO запись в логи при возникновении ошибок
 
 type Manager struct {
-	s *storage.Storage
-	a *accrual.Manager
-	r *repository.DB
+	s   *storage.Storage
+	a   *accrual.Manager
+	r   *repository.DB
 	muT *transactions.Mutex
 }
 
@@ -50,7 +50,7 @@ func (m *Manager) AddOrder(username string, orderID int) error {
 	err = m.s.NewOrder(username, orderID)
 	if err != nil {
 		return err
-	}		
+	}
 	return nil
 }
 
@@ -113,7 +113,7 @@ func (m *Manager) Balance(username string) (*model.BalanceDto, error) {
 	}
 
 	return &model.BalanceDto{
-		Current: sum,
+		Current:   sum,
 		Withdrawn: withdrawn,
 	}, nil
 }
@@ -135,7 +135,7 @@ func (m *Manager) Withdraw(username, order string, sum int) error {
 		return err
 	}
 
-	switch len(ts){
+	switch len(ts) {
 	case 1:
 		// 1 заказ - 1 списание
 	case 2:
@@ -152,7 +152,7 @@ func (m *Manager) Withdrawls(username string) ([]model.WithdrawlDto, error) {
 	if err != nil {
 		logger.Error("fail update orders info: %v", err)
 	}
-	
+
 	transs, err := m.s.GetTransactions(username)
 	if err != nil {
 		return nil, err
@@ -166,7 +166,7 @@ func (m *Manager) Withdrawls(username string) ([]model.WithdrawlDto, error) {
 
 	for _, t := range transs {
 		if t.Sum < 0 {
-			withdrawl := model.GetWithdrawFront(t.OrderId, t.Sum * (-1), t.Created)
+			withdrawl := model.GetWithdrawFront(t.OrderId, t.Sum*(-1), t.Created)
 			result = append(result, *withdrawl)
 		}
 	}
@@ -226,7 +226,7 @@ func (m *Manager) updateOrderInfo(o *model.Order) error {
 
 	info, err := m.a.AccrualReq(o.Id)
 	if err != nil {
-		return err 
+		return err
 	}
 
 	if info.Status != o.Status {
@@ -257,7 +257,6 @@ func checkLuhn(orderId int) error {
 
 	for orderId > 0 {
 		digit := orderId % 10
-
 
 		if shouldDouble {
 			digit <<= 1

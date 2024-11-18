@@ -14,7 +14,7 @@ type Storage struct {
 
 func New(db *repository.DB) (*Storage, error) {
 	var stor Storage
-	stor.db =db
+	stor.db = db
 	return &stor, nil
 }
 
