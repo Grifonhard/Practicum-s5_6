@@ -1,8 +1,11 @@
 package storage
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
 
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/model"
 )
@@ -23,8 +26,21 @@ func (s *Storage) NewOrder(username string, orderId int) error {
 	if err != nil {
 		return err
 	}
-	_, err := 
 	err = s.db.InsertOrder(user.Id, orderId)
+
+	if errors.Is(err, repository.ErrOrderExist) {
+		order, err := s.db.GetOrder(orderId)
+		if err != nil {
+			logger.Error("fail while get order: %v", err)
+			return err
+		}
+		if order.UserId == user.Id {
+			return ErrOrderExistThis
+		} else {
+			return fmt.Errorf("%w user id: %d", ErrOrderExistAnother, order.UserId)
+		}
+	}
+
 	if err != nil {
 		return err
 	}

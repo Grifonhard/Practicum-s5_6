@@ -1,10 +1,10 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/auth"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/order"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
@@ -83,6 +83,11 @@ func Login(m *auth.Manager) gin.HandlerFunc {
 
 func AddOrder(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if c.GetHeader("Content-Type") != "text/plain" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Content-Type must be text/plain"})
+			return
+		}
+
 		username, exists := c.Get("username")
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
@@ -109,15 +114,17 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 
 		err = m.AddOrder(usernameStr, orderIDInt)
 		if err != nil {
-			if err == repository.ErrOrdersNotFound {
-				c.JSON(http.StatusNotFound, gin.H{"error": "no orders found"})
+			if errors.Is(err, storage.ErrOrderExistThis) {
+				c.JSON(http.StatusOK, "success")
+			}
+			if errors.Is(err, storage.ErrOrderExistThis) {
+				c.JSON(http.StatusConflict, gin.H{"error": "no orders found"})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve orders"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add order"})
 			return
 		}
 
-		// Возвращаем заказы клиенту
-		c.JSON(http.StatusOK, gin.H{"orders": orders})
+		c.JSON(http.StatusAccepted, "success")
 	}
 }
