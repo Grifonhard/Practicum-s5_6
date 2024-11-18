@@ -1,16 +1,16 @@
 package storage
 
 import (
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/drivers/psql"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/model"
 )
 
 // TODO service layers
 type Storage struct {
-	db *psql.DB
+	db *repository.DB
 }
 
-func New(db *psql.DB) (*Storage, error) {
+func New(db *repository.DB) (*Storage, error) {
 	var stor Storage
 	stor.db =db
 	return &stor, nil

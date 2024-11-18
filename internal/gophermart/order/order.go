@@ -4,8 +4,8 @@ import (
 	"sort"
 
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/drivers/accrual"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/drivers/psql"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/order/storage"
 	"github.com/Grifonhard/Practicum-s5_6/internal/model"
 )
 
@@ -14,14 +14,14 @@ import (
 type Manager struct {
 	s *storage.Storage
 	a *accrual.Manager
-	p *psql.DB
+	r *repository.DB
 }
 
-func New(p *psql.DB, stor *storage.Storage, acm *accrual.Manager) (*Manager, error) {
+func New(r *repository.DB, stor *storage.Storage, acm *accrual.Manager) (*Manager, error) {
 	var m Manager
 	m.s = stor
 	m.a = acm
-	m.p = p 
+	m.r = r 
 	return &m, nil
 }
 
@@ -37,7 +37,7 @@ func (m *Manager) AddOrder(username string, orderID int) error {
 	return nil
 }
 
-func (m *Manager) ListOrders(username string) ([]model.OrderFront, error) {
+func (m *Manager) ListOrders(username string) ([]model.OrderDto, error) {
 	orders, err := m.s.GetOrders(username)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (m *Manager) ListOrders(username string) ([]model.OrderFront, error) {
 
 	// часть получения инфы о заказах, по которым ещё нет данных
 	// собираем недостающую инфу
-	var ordersFront []model.OrderFront
+	var ordersFront []model.OrderDto
 	for _, o := range orders {
 		order, err := m.checkAndConverOrder(&o)
 		if err != nil {
@@ -62,7 +62,13 @@ func (m *Manager) ListOrders(username string) ([]model.OrderFront, error) {
 }
 
 func (m *Manager) Balance(username string) (int, error) {
+	userInfo, err := m.r.GetUser(username)
+	if err != nil {
+		return 0, err
+	}
 
+	
+	
 }
 
 func (m *Manager) Withdraw(username, order string, sum int) error {
@@ -73,8 +79,8 @@ func (m *Manager) Withdrawls(username string) error {
 	
 }
 
-func (m *Manager) checkAndConverOrder(o *model.Order) (*model.OrderFront, error) {
-	var orderFront model.OrderFront
+func (m *Manager) checkAndConverOrder(o *model.Order) (*model.OrderDto, error) {
+	var orderFront model.OrderDto
 	var accrual int
 	var err error
 	var newO *model.Order
