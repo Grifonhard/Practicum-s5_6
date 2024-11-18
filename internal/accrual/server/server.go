@@ -18,10 +18,12 @@ func Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	httpCfg := config.HTTPConfig{RunAddress: "localhost:8080"}
-	dbURI := os.Getenv("DATABASE_URI")
+	parseFlags()
+	initConfig()
+
+	httpCfg := config.HTTPConfig{RunAddress: flagRunAddress}
 	pgCfg := config.PostgresConfig{
-		DatabaseURI:    dbURI,
+		DatabaseURI:    flagDatabaseURI,
 		ConnectTimeout: 5 * time.Second,
 	}
 
@@ -59,5 +61,15 @@ func Run() {
 
 	if err != nil {
 		panic(err)
+	}
+}
+
+func initConfig() {
+	if envRunAddress := os.Getenv("RUN_ADDRESS"); envRunAddress != "" {
+		flagRunAddress = envRunAddress
+	}
+
+	if envDatabaseURI := os.Getenv("DATABASE_URI"); envDatabaseURI != "" {
+		flagDatabaseURI = envDatabaseURI
 	}
 }
