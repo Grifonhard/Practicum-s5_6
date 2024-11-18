@@ -17,10 +17,15 @@ func NewGoodRepository(db *pgxpool.Pool) *GoodRepository {
 	}
 }
 
-func (r *GoodRepository) GetGoodsByOrderNumbers(ctx context.Context, numbers []uint64) ([]model.Good, error) {
-	query := "SELECT * FROM accrual.goods WHERE order_number = any ($1)"
+func (r *GoodRepository) GetGoodsOfOrdersByStatus(ctx context.Context, orderStatus string) ([]model.Good, error) {
+	query := `
+        SELECT goods.id, goods.description, goods.price, goods.order_number, goods.created_at
+        FROM accrual.orders AS orders
+        JOIN accrual.goods AS goods ON goods.order_number = orders.number
+        WHERE orders.status = $1
+    `
 
-	rows, err := r.db.Query(ctx, query, numbers)
+	rows, err := r.db.Query(ctx, query, orderStatus)
 	if err != nil {
 		return nil, fmt.Errorf("select goods: %w", err)
 	}

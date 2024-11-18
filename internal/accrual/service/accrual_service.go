@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"github.com/Grifonhard/Practicum-s5_6/internal/accrual/model"
-	"github.com/Grifonhard/Practicum-s5_6/internal/lib/math"
+	"github.com/Grifonhard/Practicum-s5_6/internal/lib/helpers"
 	"log/slog"
 	"strings"
 )
@@ -14,7 +14,7 @@ type accrualRepository interface {
 }
 
 type goodRepository interface {
-	GetGoodsByOrderNumbers(context.Context, []uint64) ([]model.Good, error)
+	GetGoodsOfOrdersByStatus(context.Context, string) ([]model.Good, error)
 }
 
 type AccrualService struct {
@@ -42,69 +42,59 @@ func (s *AccrualService) RegisterAccrual(ctx context.Context, accrual model.Accr
 }
 
 func (s *AccrualService) CalculateAccruals(ctx context.Context) {
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-
-			orders, err := s.orderRepo.GetRegisteredOrdersWithGoods(ctx)
-			if err != nil {
-				slog.ErrorContext(ctx, "get registered orders", "err", err)
-			}
-
-			accruals, err := s.accrualRepo.GetAllAccrualPrograms(ctx)
-			if err != nil {
-				slog.ErrorContext(ctx, "get all accrual programs", "err", err)
-			}
-
-			for _, order := range orders {
-				err = s.orderRepo.UpdateOrderStatus(ctx, order.Number, model.OrderStatusProcessing)
-				if err == nil {
-					slog.ErrorContext(ctx, "update order status", "err", err)
-				}
-
-				var orderAccrual uint64
-
-				for _, accrual := range accruals {
-					match := strings.ToLower(accrual.Match)
-
-					matchedGoods := selectMatchedGoods(order.Goods, match)
-
-					for _, good := range matchedGoods {
-						switch accrual.RewardType {
-						case model.RewardTypePoints:
-							orderAccrual += uint64(accrual.Reward)
-						case model.RewardTypePercent:
-							reward := math.Percent(int(accrual.Reward), int(good.Price))
-							orderAccrual += uint64(reward)
-						}
-					}
-				}
-
-				err = s.orderRepo.UpdateOrderAccrual(ctx, order.Number, orderAccrual)
-				if err != nil {
-					updateErr := s.orderRepo.UpdateOrderStatus(ctx, order.Number, model.OrderStatusInvalid)
-					if updateErr != nil {
-						slog.ErrorContext(ctx, "update order status", "err", updateErr)
-					}
-				}
-			}
-		}
-	}()
+	go s.calculateAccruals(ctx)
 }
 
-func selectMatchedGoods(goods []model.Good, match string) []model.Good {
-	result := make([]model.Good, 0, len(goods))
+func (s *AccrualService) calculateAccruals(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
 
-	for _, good := range goods {
-		desc := strings.ToLower(good.Description)
-		if strings.Contains(desc, match) {
-			result = append(result, good)
+		goods, err := s.goodRepo.GetGoodsOfOrdersByStatus(ctx, model.OrderStatusRegistered)
+		if err != nil {
+			slog.ErrorContext(ctx, "get registered orders", "err", err)
+		}
+
+		groupedGoods := helpers.GroupBy(goods, func(g model.Good) uint64 { return g.OrderNumber })
+
+		accruals, err := s.accrualRepo.GetAllAccrualPrograms(ctx)
+		if err != nil {
+			slog.ErrorContext(ctx, "get all accrual programs", "err", err)
+		}
+
+		for number, goodsList := range groupedGoods {
+			err = s.orderRepo.UpdateOrderStatus(ctx, number, model.OrderStatusProcessing)
+			if err != nil {
+				slog.ErrorContext(ctx, "update order status", "err", err)
+			}
+
+			var orderAccrual uint64
+			for _, accrual := range accruals {
+				match := strings.ToLower(accrual.Match)
+
+				filteredGoods := helpers.Filter(goodsList, func(good model.Good, _ int) bool {
+					desc := strings.ToLower(good.Description)
+					return strings.Contains(desc, match)
+				})
+
+				for _, good := range filteredGoods {
+					reward := CalculateReward(good, accrual)
+					orderAccrual += reward
+				}
+			}
+
+			err = s.orderRepo.UpdateOrderAccrual(ctx, number, orderAccrual)
+			if err != nil {
+				updateErr := s.orderRepo.UpdateOrderStatus(ctx, number, model.OrderStatusInvalid)
+				if updateErr != nil {
+					slog.ErrorContext(ctx, "update order status", "err", updateErr)
+				}
+			} else {
+				slog.InfoContext(ctx, "update order accrual", "order", number, "accrual", orderAccrual)
+			}
 		}
 	}
-
-	return result
 }
