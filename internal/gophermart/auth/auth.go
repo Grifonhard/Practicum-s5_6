@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/drivers/psql"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/storage"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"

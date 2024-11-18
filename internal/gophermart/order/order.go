@@ -1,11 +1,13 @@
 package order
 
 import (
+	"errors"
 	"sort"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/drivers/accrual"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/accrual"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/order/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/model"
 )
 
@@ -17,11 +19,18 @@ type Manager struct {
 	r *repository.DB
 }
 
-func New(r *repository.DB, stor *storage.Storage, acm *accrual.Manager) (*Manager, error) {
+func New(r *repository.DB, acm *accrual.Manager) (*Manager, error) {
 	var m Manager
+
+	stor, err := storage.New(r)
+	if err != nil {
+		return nil, err
+	}
 	m.s = stor
+
 	m.a = acm
-	m.r = r 
+	m.r = r
+
 	return &m, nil
 }
 
@@ -38,6 +47,11 @@ func (m *Manager) AddOrder(username string, orderID int) error {
 }
 
 func (m *Manager) ListOrders(username string) ([]model.OrderDto, error) {
+	err := m.updateOrdersInfo(username)
+	if err != nil {
+		logger.Error("fail update orders info: %v", err)
+	}
+
 	orders, err := m.s.GetOrders(username)
 	if err != nil {
 		return nil, err
@@ -50,9 +64,17 @@ func (m *Manager) ListOrders(username string) ([]model.OrderDto, error) {
 	// собираем недостающую инфу
 	var ordersFront []model.OrderDto
 	for _, o := range orders {
-		order, err := m.checkAndConverOrder(&o)
+		order, err := m.convertToFrontOrder(&o)
+		if errors.Is(err, ErrOrderNotReady) {
+			logger.Debug("order is still processing: %v", o)
+			continue
+		}
+		if errors.Is(err, ErrOrderInvalid) {
+			logger.Debug("order is invalid: %v", o)
+			continue
+		}
 		if err != nil {
-			// TODO может просто писать в логи, а поломанные игнорить или менять статус?
+			logger.Error("order %+v convert error: %v", o, err)
 			return nil, err
 		}
 		ordersFront = append(ordersFront, *order)
@@ -62,72 +84,116 @@ func (m *Manager) ListOrders(username string) ([]model.OrderDto, error) {
 }
 
 func (m *Manager) Balance(username string) (int, error) {
-	userInfo, err := m.r.GetUser(username)
+	err := m.updateOrdersInfo(username)
+	if err != nil {
+		logger.Error("fail update orders info: %v", err)
+	}
+
+	ts, err := m.s.GetTransactions(username)
 	if err != nil {
 		return 0, err
 	}
 
-	
-	
+	var sum int
+
+	for _, t := range ts {
+		sum += t.Sum
+	}
+
+	return sum, nil
 }
 
 func (m *Manager) Withdraw(username, order string, sum int) error {
+	err := m.updateOrdersInfo(username)
+	if err != nil {
+		logger.Error("fail update orders info: %v", err)
+	}
 
 }
 
 func (m *Manager) Withdrawls(username string) error {
+	err := m.updateOrdersInfo(username)
+	if err != nil {
+		logger.Error("fail update orders info: %v", err)
+	}
 	
 }
 
-func (m *Manager) checkAndConverOrder(o *model.Order) (*model.OrderDto, error) {
+func (m *Manager) convertToFrontOrder(o *model.Order) (*model.OrderDto, error) {
+	if o.Status == model.NEW || o.Status == model.PROCESSING {
+		return nil, ErrOrderNotReady
+	}
+	if o.Status == model.INVALID {
+		return nil, ErrOrderInvalid
+	}
+
 	var orderFront model.OrderDto
 	var accrual int
-	var err error
-	var newO *model.Order
-	if o.Status != model.PROCESSED || o.Status != model.INVALID {
-		newO, accrual, err = m.updateOrderInfo(o)
-		if err != nil {
-			return nil, err
-		}
-		o = newO
+
+	transs, err := m.r.GetTransactionsByOrder(o.Id)
+	if err != nil {
+		return nil, err
 	}
+
+	for _, t := range transs {
+		accrual += t.Sum
+	}
+
 	err = orderFront.ConvertOrder(o, accrual)
 	if err != nil {
 		return nil, err
 	}
+
 	return &orderFront, nil
 }
 
-func (m *Manager) updateOrderInfo(o *model.Order) (*model.Order, int, error) {
+func (m *Manager) updateOrdersInfo(username string) error {
+	orders, err := m.s.GetNotComplitedOrders(username)
+	if err != nil {
+		return err
+	}
+
+	for _, o := range orders {
+		if err = m.updateOrderInfo(&o); err != nil {
+			// TODO может поломанные игнорить или менять статус?
+			logger.Error("fail while check and update processing order: %v error: %v", o, err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Manager) updateOrderInfo(o *model.Order) error {
 	var newOrder model.Order
 	var accrual, status int
 	var isUpdate bool
 
 	info, err := m.a.AccrualReq(o.Id)
 	if err != nil {
-		return nil, 0, err 
+		return err 
 	}
 
 	if info.Status != o.Status {
 		accrual, status, err = newOrder.ConvertAccrual(info)
 		if err != nil {
-			return nil, 0, err
+			return err
 		}
-		err = m.p.UpdateOrderStatus(o.Id, status)
+		err = m.r.UpdateOrderStatus(o.Id, status)
 		if err != nil {
-			return nil, 0, err
+			return err
 		}
 		isUpdate = true
 	}
 
 	if info.Status == model.PROCESSED && isUpdate {
-		err = m.p.InsertBalanceTransaction(o.UserId, o.Id, accrual)
+		err = m.r.InsertBalanceTransaction(o.UserId, o.Id, accrual)
 		if err != nil {
-			return nil, 0, err
+			return err
 		}
 	}
 
-	return &newOrder, accrual, nil
+	return nil
 }
 
 func checkLuhn(orderId int) error {

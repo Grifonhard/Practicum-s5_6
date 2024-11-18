@@ -38,21 +38,21 @@ func (db *DB) CreateTables() error {
 			password_hash VARCHAR(255) NOT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
-		CREATE TABLE IF NOT EXISTS Order (
+		CREATE TABLE IF NOT EXISTS Orderu (
 			id INT UNIQUE NOT NULL,
 			user_id INT REFERENCES User(id) ON DELETE CASCADE,
 			status INT NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
 		CREATE TABLE IF NOT EXISTS BalanceTransactions (
 			id SERIAL PRIMARY KEY,
 			user_id INT REFERENCES User(id) ON DELETE CASCADE,
-			order_id INT REFERENCES Order(id) ON DELETE CASCADE,
+			order_id INT REFERENCES Orderu(id) ON DELETE CASCADE,
 			sum INT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
-		CREATE INDEX IF NOT EXISTS idx_order_user_id ON Order(user_id);
+		CREATE INDEX IF NOT EXISTS idx_order_user_id ON Orderu(user_id);
 		CREATE INDEX IF NOT EXISTS idx_balance_transactions_user_id ON BalanceTransactions(user_id);
 		CREATE INDEX IF NOT EXISTS idx_balance_transactions_order_id ON BalanceTransactions(order_id);
 	`)
@@ -73,7 +73,7 @@ func (db *DB) InsertUser(username, passwordHash string) error {
 
 func (db *DB) InsertOrder(userID, orderID int) error {
 	_, err := db.p.Exec(context.Background(),
-		"INSERT INTO Order (user_id, id, status) VALUES ($1, $2, $3)", userID, orderID, model.NEWINT)
+		"INSERT INTO Orderu (user_id, id, status) VALUES ($1, $2, $3)", userID, orderID, model.NEWINT)
 
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == ERRDUPLICATE {
@@ -84,7 +84,7 @@ func (db *DB) InsertOrder(userID, orderID int) error {
 }
 
 func (db *DB) UpdateOrderStatus(orderID, status int) error {
-	_, err := db.p.Exec(context.Background(), "UPDATE Order SET status = $1 WHERE id = $2", status, orderID)
+	_, err := db.p.Exec(context.Background(), "UPDATE Orderu SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", status, orderID)
 	if err != nil {
 		return fmt.Errorf("failed to update order status: %v", err)
 	}
@@ -113,7 +113,7 @@ func (db *DB) GetUser(uname string) (*model.User, error) {
 func (db *DB) GetOrder(orderId int) (*model.Order, error) {
 	var orderDb model.OrderDB
 	var order model.Order
-	err := db.p.QueryRow(context.Background(), "SELECT id, user_id, id, status, created_at FROM Order WHERE order_id = $1", orderId).
+	err := db.p.QueryRow(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE order_id = $1", orderId).
 		Scan(&orderDb.Id, &orderDb.UserId, &orderDb.Status, &orderDb.Created)
 	if err == pgx.ErrNoRows {
 		return nil, ErrOrderNotFound
@@ -125,8 +125,8 @@ func (db *DB) GetOrder(orderId int) (*model.Order, error) {
 	return &order, nil
 }
 
-func (db *DB) GetOrders(userID int) ([]model.Order, error) {
-	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, id, status, created_at FROM Order WHERE user_id = $1", userID)
+func (db *DB) GetOrders(userId int) ([]model.Order, error) {
+	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE user_id = $1", userId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query orders: %v", err)
 	}
@@ -157,8 +157,70 @@ func (db *DB) GetOrders(userID int) ([]model.Order, error) {
 	return orders, nil
 }
 
-func (db *DB) GetTransactions(userID int) ([]model.BalanceTransactions, error) {
-	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE user_id = $1", userID)
+func (db *DB) GetNotComplitedOrders(userId int) ([]model.Order, error) {
+	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE user_id = $1 AND status IN (0, 1)", userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query orders: %v", err)
+	}
+	defer rows.Close()
+
+	var orders []model.Order
+	for rows.Next() {
+		var orderDb model.OrderDB
+		var order model.Order
+
+		err := rows.Scan(&orderDb.Id, &orderDb.UserId, &orderDb.Status, &orderDb.Created)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan order: %v", err)
+		}
+
+		order.HydrateDB(&orderDb)
+		orders = append(orders, order)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error occurred during rows iteration: %v", err)
+	}
+
+	if len(orders) == 0 {
+		return nil, ErrOrdersNotFound
+	}
+
+	return orders, nil
+}
+
+func (db *DB) GetTransactionsByOrder(orderId int) ([]model.BalanceTransactions, error) {
+	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE order_id = $1", orderId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query transactions: %v", err)
+	}
+	defer rows.Close()
+
+	var transacts []model.BalanceTransactions
+	for rows.Next() {
+		var transact model.BalanceTransactions
+
+		err := rows.Scan(&transact.Id, &transact.UserId, &transact.OrderId, &transact.Sum, &transact.Created)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan transaction: %v", err)
+		}
+
+		transacts = append(transacts, transact)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error occurred during rows iteration: %v", err)
+	}
+
+	if len(transacts) == 0 {
+		return nil, ErrTransNotFound
+	}
+
+	return transacts, nil
+}
+
+func (db *DB) GetTransactions(userId int) ([]model.BalanceTransactions, error) {
+	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE user_id = $1", userId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query transactions: %v", err)
 	}

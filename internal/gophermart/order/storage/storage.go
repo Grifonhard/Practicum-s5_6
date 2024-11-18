@@ -39,3 +39,28 @@ func (s *Storage) GetOrders(username string) ([]model.Order, error) {
 	}
 	return orders, nil
 }
+
+func (s *Storage) GetNotComplitedOrders(username string) ([]model.Order, error) {
+	user, err := s.db.GetUser(username)
+	if err != nil {
+		return nil, err
+	}
+	orders, err := s.db.GetNotComplitedOrders(user.Id)
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
+}
+
+func (s *Storage) GetTransactions(username string) ([]model.BalanceTransactions, error) {
+	u, err := s.db.GetUser(username)
+	if err != nil {
+		return nil, err
+	}
+
+	transs, err := s.db.GetTransactions(u.Id)
+	if err != nil {
+		return nil, err
+	}
+	return transs, nil
+}

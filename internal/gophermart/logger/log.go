@@ -10,7 +10,7 @@ type Logger struct {
 	zapLogger *zap.Logger
 }
 
-func New(level string, logFilePath string) (*Logger, error) {
+func new(level string, logFilePath string) (*Logger, error) {
 	logLevel := parseLogLevel(level)
 
 	var core zapcore.Core
@@ -55,26 +55,26 @@ func parseLogLevel(level string) zapcore.Level {
 	}
 }
 
-func (l *Logger) Info(msg string, fields ...zap.Field) {
+func (l *Logger) info(msg string, fields ...zap.Field) {
 	l.zapLogger.Info(msg, fields...)
 }
 
-func (l *Logger) Debug(msg string, fields ...zap.Field) {
+func (l *Logger) debug(msg string, fields ...zap.Field) {
 	l.zapLogger.Debug(msg, fields...)
 }
 
-func (l *Logger) Warn(msg string, fields ...zap.Field) {
+func (l *Logger) warn(msg string, fields ...zap.Field) {
 	l.zapLogger.Warn(msg, fields...)
 }
 
-func (l *Logger) Error(msg string, fields ...zap.Field) {
+func (l *Logger) error(msg string, fields ...zap.Field) {
 	l.zapLogger.Error(msg, fields...)
 }
 
-func (l *Logger) Fatal(msg string, fields ...zap.Field) {
+func (l *Logger) fatal(msg string, fields ...zap.Field) {
 	l.zapLogger.Fatal(msg, fields...)
 }
 
-func (l *Logger) Sync() {
+func (l *Logger) sync() {
 	_ = l.zapLogger.Sync()
 }
