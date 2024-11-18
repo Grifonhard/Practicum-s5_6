@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/auth"
@@ -80,24 +81,33 @@ func Login(m *auth.Manager) gin.HandlerFunc {
 	}
 }
 
-func Orders(m *order.Manager) gin.HandlerFunc {
+func AddOrder(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Извлекаем username из контекста
 		username, exists := c.Get("username")
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
 			return
 		}
 
-		// Приводим username к строке
 		usernameStr, ok := username.(string)
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
 			return
 		}
 
-		// Получаем список заказов
-		orders, err := m.ListOrders(usernameStr)
+		var orderID string
+		if err := c.ShouldBind(&orderID); err != nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid request format"})
+			return
+		}
+
+		orderIDInt, err := strconv.Atoi(orderID)
+		if err != nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "orderID must be a number"})
+			return
+		}
+
+		err = m.AddOrder(usernameStr, orderIDInt)
 		if err != nil {
 			if err == repository.ErrOrdersNotFound {
 				c.JSON(http.StatusNotFound, gin.H{"error": "no orders found"})

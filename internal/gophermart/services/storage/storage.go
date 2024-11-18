@@ -23,6 +23,7 @@ func (s *Storage) NewOrder(username string, orderId int) error {
 	if err != nil {
 		return err
 	}
+	_, err := 
 	err = s.db.InsertOrder(user.Id, orderId)
 	if err != nil {
 		return err
