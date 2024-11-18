@@ -12,7 +12,7 @@ import (
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
 )
 
-// TODO запись в логи при возникновении ошибок
+// TODO поля полными именами
 
 type Manager struct {
 	s   *storage.Storage
