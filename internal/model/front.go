@@ -79,3 +79,8 @@ func (o *OrderDto) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
+
+type WithdrawRequest struct {
+	Order string `json:"order" binding:"required"`
+	Sum   int    `json:"sum" binding:"required"`
+}
