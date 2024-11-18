@@ -6,8 +6,8 @@ import (
 
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/accrual"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/order/storage"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/order/transactions"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/model"
 )

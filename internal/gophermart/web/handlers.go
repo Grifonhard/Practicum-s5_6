@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/auth"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/order/storage"
 	"github.com/gin-gonic/gin"
 )
 

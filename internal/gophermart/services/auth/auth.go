@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/order/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -18,6 +19,7 @@ const (
 type Manager struct {
 	s         *storage.Storage
 	p         *repository.DB
+	muT		  *transactions.Mutex
 	secretKey []byte
 }
 
@@ -25,6 +27,11 @@ func New(db *repository.DB, stor *storage.Storage) (*Manager, error) {
 	var m Manager
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
+	if err != nil {
+		return nil, err
+	}
+
+	m.muT, err = transactions.New()
 	if err != nil {
 		return nil, err
 	}
@@ -43,6 +50,9 @@ type Claims struct {
 }
 
 func (m *Manager) Registration(username, password string) (string, error) {
+	m.muT.Lock(username)
+	defer m.muT.Unlock(username)
+
 	hashPw, err := hashPassword(password)
 	if err != nil {
 		return "", err
