@@ -82,7 +82,7 @@ func (s *AccrualService) calculateAccruals(ctx context.Context) {
 
 				for _, good := range filteredGoods {
 					reward := CalculateReward(good, accrual)
-					orderAccrual += reward
+					orderAccrual += uint64(reward)
 				}
 			}
 

@@ -51,7 +51,7 @@ func (h *Handler) AccrualRegistrationHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"accrual": accrual,
 	})
 }

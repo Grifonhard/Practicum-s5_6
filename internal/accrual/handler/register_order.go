@@ -15,7 +15,7 @@ import (
 )
 
 type orderRegistrationRequest struct {
-	Order uint64       `json:"order"`
+	Order string       `json:"order"`
 	Goods []model.Good `json:"goods"`
 }
 
@@ -28,16 +28,23 @@ func (h *Handler) OrderRegistrationHandler(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	number := strconv.FormatUint(req.Order, 10)
-
-	if ok := validate.CheckLuhn(number); !ok {
+	if ok := validate.CheckLuhn(req.Order); !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "invalid order",
 		})
 		return
 	}
 
-	err := h.OrderService.RegisterOrder(ctx, req.Order, req.Goods)
+	number, err := strconv.ParseUint(req.Order, 10, 64)
+	if err != nil {
+		slog.ErrorContext(ctx, "order registration handle", "err", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	err = h.OrderService.RegisterOrder(ctx, number, req.Goods)
 
 	if err != nil {
 		slog.ErrorContext(ctx, "order registration handle", "err", err)

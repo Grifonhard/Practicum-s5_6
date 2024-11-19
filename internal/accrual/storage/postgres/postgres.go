@@ -54,7 +54,7 @@ func CreateTables(ctx context.Context, db *pgxpool.Pool) error {
         CREATE TABLE IF NOT EXISTS accrual.goods (
             id SERIAL PRIMARY KEY,
             description text NOT NULL,
-            price bigint NOT NULL,
+            price double precision NOT NULL,
             order_number bigint NOT NULL,
             created_at timestamp with time zone
         );
