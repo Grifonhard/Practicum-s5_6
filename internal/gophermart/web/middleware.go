@@ -17,8 +17,6 @@ const (
 func Authentication(am *auth.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		logger.Debug("middleware %+v", c.Request)
-
 		authCookie, err := c.Cookie(COOKIEAUTH)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication cookie required"})
@@ -42,8 +40,6 @@ func Authentication(am *auth.Manager) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
-		logger.Debug("middleware user id: %d", userID)
 
 		c.Set(USERID, userID)
 

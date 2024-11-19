@@ -35,11 +35,7 @@ func New(r *repository.DB, t *transactions.Mutex, acm *accrual.Manager) (*Manage
 
 func (m *Manager) AddOrder(userID int, orderID int) error {
 
-	logger.Debug("order AddOrder userId: %d orderId: %d", userID, orderID)
-
 	err := checkLuhn(orderID)
-
-	defer logger.Debug("order AddOrder error: %+v", &err)
 
 	if err != nil {
 		return err
@@ -64,11 +60,7 @@ func (m *Manager) AddOrder(userID int, orderID int) error {
 
 func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 
-	logger.Debug("order ListOrders userId: %d", userID)
-
 	orders, err := m.repository.GetOrders(userID)
-
-	defer logger.Debug("order ListOrders error: %+v", &err)
 
 	if err != nil {
 		return nil, err
@@ -76,8 +68,6 @@ func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 	sort.Slice(orders, func(i, j int) bool {
 		return orders[i].Created.Before(orders[j].Created)
 	})
-
-	logger.Warn("list: %v", orders)
 
 	// часть получения инфы о заказах, по которым ещё нет данных
 	// собираем недостающую инфу
@@ -100,11 +90,7 @@ func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 
 func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 
-	logger.Debug("order Balance userId: %d", userID)
-
 	ts, err := m.repository.GetTransactions(userID)
-
-	defer logger.Debug("order Balance error: %+v", &err)
 
 	if err != nil {
 		return nil, err
@@ -127,14 +113,10 @@ func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 
 func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 
-	logger.Debug("order Withdraw userId: %d order: %s sum: %f", userID, order, sum)
-
 	m.muTransaction.Lock(strconv.Itoa(userID))
 	defer m.muTransaction.Unlock(strconv.Itoa(userID))
 
 	balance, err := m.Balance(userID)
-
-	defer logger.Debug("order Withdraw error: %+v", &err)
 
 	if err != nil {
 		return err
@@ -177,11 +159,7 @@ func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 
 func (m *Manager) Withdrawls(userID int) ([]model.WithdrawlDto, error) {
 
-	logger.Debug("order Withdrawls userId: %d", userID)
-
 	transs, err := m.repository.GetTransactions(userID)
-
-	defer logger.Debug("order Withdrawls error: %+v", &err)
 
 	if err != nil {
 		return nil, err

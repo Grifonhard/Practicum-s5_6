@@ -21,8 +21,6 @@ type RegRequest struct {
 func Registration(m *auth.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		logger.Debug("handlers Registration %+v", c.Request)
-
 		var req RegRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -58,8 +56,6 @@ func Registration(m *auth.Manager) gin.HandlerFunc {
 func Login(m *auth.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		logger.Debug("handlers Login %+v", c.Request)
-
 		var req RegRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -94,8 +90,6 @@ func Login(m *auth.Manager) gin.HandlerFunc {
 
 func AddOrder(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		logger.Debug("handlers AddOrder %+v", c.Request)
 
 		if c.GetHeader("Content-Type") != "text/plain" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Content-Type must be text/plain"})
@@ -151,8 +145,6 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 func ListOrders(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		logger.Debug("handlers ListOrders %+v", c.Request)
-
 		userIDinterface, exists := c.Get(USERID)
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
@@ -183,8 +175,6 @@ func ListOrders(m *order.Manager) gin.HandlerFunc {
 func Balance(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		logger.Debug("handlers Balance %+v", c.Request)
-
 		userIDinterface, exists := c.Get(USERID)
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
@@ -204,16 +194,12 @@ func Balance(m *order.Manager) gin.HandlerFunc {
 			return
 		}
 
-		logger.Debug("balance: %+v", balance)
-
 		c.JSON(http.StatusOK, balance)
 	}
 }
 
 func Withdraw(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		logger.Debug("handlers Withdraw %+v", c.Request)
 
 		userIDinterface, exists := c.Get(USERID)
 		if !exists {
@@ -254,8 +240,6 @@ func Withdraw(m *order.Manager) gin.HandlerFunc {
 
 func Withdrawals(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		logger.Debug("handlers Withdrawals %+v", c.Request)
 
 		userIDinterface, exists := c.Get(USERID)
 		if !exists {
