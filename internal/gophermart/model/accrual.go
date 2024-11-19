@@ -1,6 +1,10 @@
 package model
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
+)
 
 type OrderAccrual struct {
 	OrderID string `json:"order"`
@@ -15,6 +19,19 @@ func (o *Order) ConvertAccrual(oA *OrderAccrual) (int, int, error) {
 		return 0, 0, err
 	}
 	o.Status = oA.Status
-	status, err := strconv.Atoi(oA.Status)
-	return oA.Accrual, status, err
+	var status int
+	switch o.Status {
+	case NEW:
+		status = NEWINT
+	case PROCESSING:
+		status = PROCESSINGINT
+	case INVALID:
+		status = INVALIDINT
+	case PROCESSED:
+		status = PROCESSEDINT
+	default:
+		logger.Error("invalid status when convert: %s", o.Status)
+		status = 10
+	}
+	return oA.Accrual, status, nil
 }
