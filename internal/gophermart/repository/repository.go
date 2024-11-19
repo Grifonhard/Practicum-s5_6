@@ -170,7 +170,7 @@ func (db *DB) GetOrder(orderID int) (*model.Order, error) {
 
 	var orderDB model.OrderDB
 	var order model.Order
-	err := db.p.QueryRow(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE order_id = $1", orderID).
+	err := db.p.QueryRow(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE id = $1", orderID).
 		Scan(&orderDB.ID, &orderDB.UserID, &orderDB.Status, &orderDB.Created)
 
 	defer logger.Debug("repository get order error: %+v", &err)
