@@ -204,6 +204,8 @@ func Balance(m *order.Manager) gin.HandlerFunc {
 			return
 		}
 
+		logger.Debug("balance: %+v", balance)
+
 		c.JSON(http.StatusOK, balance)
 	}
 }
