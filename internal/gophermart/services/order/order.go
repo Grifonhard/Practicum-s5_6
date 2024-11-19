@@ -16,8 +16,8 @@ import (
 // TODO поля полными именами
 
 type Manager struct {
-	accrual   *accrual.Manager
-	repository   *repository.DB
+	accrual       *accrual.Manager
+	repository    *repository.DB
 	muTransaction *transactions.Mutex
 }
 
@@ -112,8 +112,7 @@ func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 		return nil, err
 	}
 
-	var sum int
-	var withdrawn int
+	var sum, withdrawn float64
 
 	for _, t := range ts {
 		sum += t.Sum
@@ -128,7 +127,7 @@ func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 	}, nil
 }
 
-func (m *Manager) Withdraw(userID int, order string, sum int) error {
+func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 
 	logger.Debug("order Withdraw userId: %d order: %s sum: %d", userID, order, sum)
 
@@ -208,7 +207,7 @@ func (m *Manager) convertToFrontOrder(o *model.Order) (*model.OrderDto, error) {
 	}
 
 	var orderFront model.OrderDto
-	var accrual int
+	var accrual float64
 
 	transs, err := m.repository.GetTransactionsByOrder(o.ID)
 	if err != nil {

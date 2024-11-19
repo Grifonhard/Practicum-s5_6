@@ -25,21 +25,22 @@ func (m *Manager) updateOrdersInfoLoop() {
 			}
 			logger.Error("fail while get not complited orders, error: %v", err)
 		}
-	
+
 		for _, o := range orders {
 			if err = m.updateOrderInfo(&o); err != nil {
 				// TODO может поломанным менять статус?
 				logger.Error("fail while check and update processing order: %v error: %v", o, err)
 			}
 		}
-	
+
 		time.Sleep(TIMESLEEPLOOP)
 	}
 }
 
 func (m *Manager) updateOrderInfo(o *model.Order) error {
 	var newOrder model.Order
-	var accrual, status int
+	var accrual float64
+	var status int
 	var isUpdate bool
 
 	info, err := m.accrual.AccrualReq(o.ID)

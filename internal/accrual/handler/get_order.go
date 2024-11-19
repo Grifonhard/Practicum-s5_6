@@ -31,8 +31,10 @@ func (h *Handler) GetOrderHandler(c *gin.Context) {
 		return
 	}
 
+
+
 	c.JSON(http.StatusOK, gin.H{
-		"order":   order.Number,
+		"order":   strconv.FormatUint(order.Number, 10),
 		"status":  order.Status,
 		"accrual": order.Accrual,
 	})

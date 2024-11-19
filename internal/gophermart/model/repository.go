@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
+)
 
 type OrderDB struct {
 	ID      int
@@ -24,7 +28,7 @@ func (o *Order) HydrateDB(odb *OrderDB) {
 	case PROCESSEDINT:
 		o.Status = PROCESSED
 	default:
-		// TODO запись в логи
+		logger.Error("invalid status when convert db: %d", odb.Status)
 		o.Status = INVALID
 	}
 }

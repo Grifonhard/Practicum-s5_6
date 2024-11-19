@@ -21,7 +21,7 @@ func New(uri string) (*Manager, error) {
 }
 
 func (m *Manager) AccrualReq(orderID int) (*model.OrderAccrual, error) {
-	url := fmt.Sprintf("%s/%s", m.uri, strconv.Itoa(orderID))
+	url := fmt.Sprintf("%s/api/orders/%s", m.uri, strconv.Itoa(orderID))
 
 	resp, err := http.Get(url)
 	if err != nil {
