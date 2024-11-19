@@ -155,6 +155,10 @@ func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 
 	ts, err := m.repository.GetTransactionsByOrder(orderInt)
 	if errors.Is(err, repository.ErrTransNotFound) {
+		err = m.repository.InsertOrder(userID, orderInt)
+		if err != nil {
+			return err
+		}
 		return m.repository.InsertBalanceTransaction(userID, orderInt, sum)
 	}
 	if err != nil {
