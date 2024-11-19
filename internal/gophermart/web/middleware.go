@@ -15,14 +15,17 @@ const (
 
 func Authentication(am *auth.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
+
+		logger.Debug("middleware %+v", c.Request)
+
+		authCookie, err := c.Cookie("auth_token")
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication cookie required"})
 			c.Abort()
 			return
 		}
 
-		userID, err := am.Authentication(authHeader)
+		userID, err := am.Authentication(authCookie)
 		if err == auth.ErrInvalidToken {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			c.Abort()
