@@ -46,7 +46,7 @@ func (db *DB) CreateTables() error {
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
 		CREATE TABLE IF NOT EXISTS Orderu (
-			id INT UNIQUE NOT NULL,
+			id BIGINT UNIQUE NOT NULL,
 			user_id INT REFERENCES Users(id) ON DELETE CASCADE,
 			status INT NOT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -55,7 +55,7 @@ func (db *DB) CreateTables() error {
 		CREATE TABLE IF NOT EXISTS BalanceTransactions (
 			id SERIAL PRIMARY KEY,
 			user_id INT REFERENCES Users(id) ON DELETE CASCADE,
-			order_id INT REFERENCES Orderu(id) ON DELETE CASCADE,
+			order_id BIGINT REFERENCES Orderu(id) ON DELETE CASCADE,
 			sum INT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
