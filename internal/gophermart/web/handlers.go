@@ -3,7 +3,6 @@ package web
 import (
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
