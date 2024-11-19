@@ -84,11 +84,9 @@ func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 	var ordersFront []model.OrderDto
 	for _, o := range orders {
 		order, err := m.convertToFrontOrder(&o)
-		if errors.Is(err, ErrOrderNotReady) {
-			logger.Debug("order is still processing: %v", o)
-		}
 		if errors.Is(err, ErrOrderInvalid) {
 			logger.Debug("order is invalid: %v", o)
+			continue
 		}
 		if err != nil {
 			logger.Error("order %+v convert error: %v", o, err)
@@ -206,21 +204,26 @@ func (m *Manager) Withdrawls(userID int) ([]model.WithdrawlDto, error) {
 }
 
 func (m *Manager) convertToFrontOrder(o *model.Order) (*model.OrderDto, error) {
+	var orderFront model.OrderDto
+	var accrual float64
+	var err error
 	if o.Status == model.NEW || o.Status == model.PROCESSING {
-		return nil, ErrOrderNotReady
+		err = orderFront.ConvertOrder(o, accrual)
+		if err != nil {
+			return nil, err
+		}
+		return  &orderFront, nil
 	}
+
 	if o.Status == model.INVALID {
 		return nil, ErrOrderInvalid
 	}
 
-	var orderFront model.OrderDto
-	var accrual float64
-
 	transs, err := m.repository.GetTransactionsByOrder(o.ID)
-	if err != nil {
+	if err != nil && !errors.Is(err, repository.ErrTransNotFound){
 		return nil, err
 	}
-
+	
 	for _, t := range transs {
 		accrual += t.Sum
 	}
