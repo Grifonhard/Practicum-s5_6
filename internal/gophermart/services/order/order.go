@@ -2,56 +2,74 @@ package order
 
 import (
 	"errors"
+	"fmt"
 	"sort"
+	"strconv"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/accrual"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/http/accrual"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
 )
 
 // TODO поля полными именами
 
 type Manager struct {
-	s   *storage.Storage
-	a   *accrual.Manager
-	r   *repository.DB
-	muT *transactions.Mutex
+	accrual   *accrual.Manager
+	repository   *repository.DB
+	muTransaction *transactions.Mutex
 }
 
-func New(r *repository.DB, t *transactions.Mutex, s *storage.Storage, acm *accrual.Manager) (*Manager, error) {
+func New(r *repository.DB, t *transactions.Mutex, acm *accrual.Manager) (*Manager, error) {
 	var m Manager
 
-	m.s = s
-	m.muT = t
+	m.muTransaction = t
+	m.accrual = acm
+	m.repository = r
 
-	m.a = acm
-	m.r = r
+	go m.updateOrdersInfoLoop()
 
 	return &m, nil
 }
 
-func (m *Manager) AddOrder(username string, orderID int) error {
+func (m *Manager) AddOrder(userID int, orderID int) error {
+
+	logger.Debug("order AddOrder userId: %d orderId: %d", userID, orderID)
+
 	err := checkLuhn(orderID)
+
+	defer logger.Debug("order AddOrder error: %+v", &err)
+
 	if err != nil {
 		return err
 	}
-	err = m.s.NewOrder(username, orderID)
-	if err != nil {
-		return err
+	err = m.repository.InsertOrder(userID, orderID)
+
+	if errors.Is(err, repository.ErrOrderExist) {
+		order, err := m.repository.GetOrder(orderID)
+		if err != nil {
+			logger.Error("fail while get order: %v", err)
+			return err
+		}
+		if order.UserID == userID {
+			return ErrOrderExistThis
+		} else {
+			return fmt.Errorf("%w user id: %d", ErrOrderExistAnother, order.UserID)
+		}
 	}
+
 	return nil
 }
 
-func (m *Manager) ListOrders(username string) ([]model.OrderDto, error) {
-	err := m.updateOrdersInfo(username)
-	if err != nil {
-		logger.Error("fail update orders info: %v", err)
-	}
+func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 
-	orders, err := m.s.GetOrders(username)
+	logger.Debug("order ListOrders userId: %d", userID)
+
+	orders, err := m.repository.GetOrders(userID)
+
+	defer logger.Debug("order ListOrders error: %+v", &err)
+
 	if err != nil {
 		return nil, err
 	}
@@ -82,13 +100,14 @@ func (m *Manager) ListOrders(username string) ([]model.OrderDto, error) {
 	return ordersFront, err
 }
 
-func (m *Manager) Balance(username string) (*model.BalanceDto, error) {
-	err := m.updateOrdersInfo(username)
-	if err != nil {
-		logger.Error("fail update orders info: %v", err)
-	}
+func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 
-	ts, err := m.s.GetTransactions(username)
+	logger.Debug("order Balance userId: %d", userID)
+
+	ts, err := m.repository.GetTransactions(userID)
+
+	defer logger.Debug("order Balance error: %+v", &err)
+
 	if err != nil {
 		return nil, err
 	}
@@ -109,11 +128,17 @@ func (m *Manager) Balance(username string) (*model.BalanceDto, error) {
 	}, nil
 }
 
-func (m *Manager) Withdraw(username, order string, sum int) error {
-	m.muT.Lock(username)
-	defer m.muT.Unlock(username)
+func (m *Manager) Withdraw(userID int, order string, sum int) error {
 
-	balance, err := m.Balance(username)
+	logger.Debug("order Withdraw userId: %d order: %s sum: %d", userID, order, sum)
+
+	m.muTransaction.Lock(strconv.Itoa(userID))
+	defer m.muTransaction.Unlock(strconv.Itoa(userID))
+
+	balance, err := m.Balance(userID)
+
+	defer logger.Debug("order Withdraw error: %+v", &err)
+
 	if err != nil {
 		return err
 	}
@@ -121,7 +146,12 @@ func (m *Manager) Withdraw(username, order string, sum int) error {
 		return ErrNotEnoughBalance
 	}
 
-	ts, err := m.s.GetTransactionsByOrder(order)
+	orderInt, err := strconv.Atoi(order)
+	if err != nil {
+		return err
+	}
+
+	ts, err := m.repository.GetTransactionsByOrder(orderInt)
 	if err != nil {
 		return err
 	}
@@ -135,16 +165,20 @@ func (m *Manager) Withdraw(username, order string, sum int) error {
 		return ErrTooMuchTransact
 	}
 
-	return m.s.Withdraw(username, order, sum)
+	// списания - это транзакции со знаком -
+	sum *= (-1)
+
+	return m.repository.InsertBalanceTransaction(userID, orderInt, sum)
 }
 
-func (m *Manager) Withdrawls(username string) ([]model.WithdrawlDto, error) {
-	err := m.updateOrdersInfo(username)
-	if err != nil {
-		logger.Error("fail update orders info: %v", err)
-	}
+func (m *Manager) Withdrawls(userID int) ([]model.WithdrawlDto, error) {
 
-	transs, err := m.s.GetTransactions(username)
+	logger.Debug("order Withdrawls userId: %d", userID)
+
+	transs, err := m.repository.GetTransactions(userID)
+
+	defer logger.Debug("order Withdrawls error: %+v", &err)
+
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +191,7 @@ func (m *Manager) Withdrawls(username string) ([]model.WithdrawlDto, error) {
 
 	for _, t := range transs {
 		if t.Sum < 0 {
-			withdrawl := model.GetWithdrawFront(t.OrderId, t.Sum*(-1), t.Created)
+			withdrawl := model.GetWithdrawFront(t.OrderID, t.Sum*(-1), t.Created)
 			result = append(result, *withdrawl)
 		}
 	}
@@ -176,7 +210,7 @@ func (m *Manager) convertToFrontOrder(o *model.Order) (*model.OrderDto, error) {
 	var orderFront model.OrderDto
 	var accrual int
 
-	transs, err := m.r.GetTransactionsByOrder(o.Id)
+	transs, err := m.repository.GetTransactionsByOrder(o.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -193,61 +227,12 @@ func (m *Manager) convertToFrontOrder(o *model.Order) (*model.OrderDto, error) {
 	return &orderFront, nil
 }
 
-func (m *Manager) updateOrdersInfo(username string) error {
-	orders, err := m.s.GetNotComplitedOrders(username)
-	if err != nil {
-		return err
-	}
-
-	for _, o := range orders {
-		if err = m.updateOrderInfo(&o); err != nil {
-			// TODO может поломанные игнорить или менять статус?
-			logger.Error("fail while check and update processing order: %v error: %v", o, err)
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *Manager) updateOrderInfo(o *model.Order) error {
-	var newOrder model.Order
-	var accrual, status int
-	var isUpdate bool
-
-	info, err := m.a.AccrualReq(o.Id)
-	if err != nil {
-		return err
-	}
-
-	if info.Status != o.Status {
-		accrual, status, err = newOrder.ConvertAccrual(info)
-		if err != nil {
-			return err
-		}
-		err = m.r.UpdateOrderStatus(o.Id, status)
-		if err != nil {
-			return err
-		}
-		isUpdate = true
-	}
-
-	if info.Status == model.PROCESSED && isUpdate {
-		err = m.r.InsertBalanceTransaction(o.UserId, o.Id, accrual)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func checkLuhn(orderId int) error {
+func checkLuhn(orderID int) error {
 	var sum int
 	shouldDouble := false
 
-	for orderId > 0 {
-		digit := orderId % 10
+	for orderID > 0 {
+		digit := orderID % 10
 
 		if shouldDouble {
 			digit <<= 1
@@ -258,7 +243,7 @@ func checkLuhn(orderId int) error {
 
 		sum += digit
 		shouldDouble = !shouldDouble
-		orderId /= 10
+		orderID /= 10
 	}
 
 	if sum%10 == 0 {

@@ -3,14 +3,14 @@ package model
 import "strconv"
 
 type OrderAccrual struct {
-	OrderId string `json:"order"`
+	OrderID string `json:"order"`
 	Status  string `json:"status"`
 	Accrual int    `json:"accrual"`
 }
 
 func (o *Order) ConvertAccrual(oA *OrderAccrual) (int, int, error) {
 	var err error
-	o.Id, err = strconv.Atoi(oA.OrderId)
+	o.ID, err = strconv.Atoi(oA.OrderID)
 	if err != nil {
 		return 0, 0, err
 	}

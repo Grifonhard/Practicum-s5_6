@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,13 +17,12 @@ const (
 )
 
 type Manager struct {
-	s         *storage.Storage
 	p         *repository.DB
 	muT		  *transactions.Mutex
 	secretKey []byte
 }
 
-func New(db *repository.DB, t *transactions.Mutex, stor *storage.Storage) (*Manager, error) {
+func New(db *repository.DB, t *transactions.Mutex) (*Manager, error) {
 	var m Manager
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
@@ -33,7 +32,6 @@ func New(db *repository.DB, t *transactions.Mutex, stor *storage.Storage) (*Mana
 
 	m.muT = t
 	m.secretKey = key
-	m.s = stor
 	m.p = db
 
 	return &m, nil
@@ -41,15 +39,21 @@ func New(db *repository.DB, t *transactions.Mutex, stor *storage.Storage) (*Mana
 
 // TODO TokenClaims
 type Claims struct {
-	Username string `json:"username"`
+	UserID int `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
 func (m *Manager) Registration(username, password string) (string, error) {
+
+	logger.Debug("auth Registration uname: %s pw: %s", username, password)
+
 	m.muT.Lock(username)
 	defer m.muT.Unlock(username)
 
 	hashPw, err := hashPassword(password)
+
+	defer logger.Debug("auth Registration error: %+v", &err)
+
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +61,11 @@ func (m *Manager) Registration(username, password string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	token, err := m.createToken(username, password)
+	user, err := m.p.GetUser(username)
+	if err != nil {
+		return "", err
+	}
+	token, err := m.createToken(user.ID)
 	if err != nil {
 		return "", err
 	}
@@ -65,34 +73,46 @@ func (m *Manager) Registration(username, password string) (string, error) {
 }
 
 func (m *Manager) Login(username, password string) (string, error) {
+
+	logger.Debug("auth Login uname: %s pw: %s", username, password)
+
 	user, err := m.p.GetUser(username)
+
+	defer logger.Debug("auth Login error: %+v", &err)
+
 	if err != nil {
 		return "", err
 	}
-	if !checkPasswordHash(password, user.Password_hash) {
+	if !checkPasswordHash(password, user.PasswordHash) {
 		return "", ErrWrongPassword
 	}
-	token, err := m.createToken(username, password)
+	token, err := m.createToken(user.ID)
 	if err != nil {
 		return "", err
 	}
 	return token, nil
 }
 
-func (m *Manager) Authentication(token string) (string, error) {
+func (m *Manager) Authentication(token string) (int, error) {
+	
+	logger.Debug("auth Authentication")
+
 	claims, err := m.decodeToken(token)
+
+	defer logger.Debug("auth Authentication error: %+v", &err)
+
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	user, err := m.p.GetUser(claims.Username)
-	return user.Username, err
+	user, err := m.p.GetUserByID(claims.UserID)
+	return user.ID, err
 }
 
-func (m *Manager) createToken(username, password string) (string, error) {
+func (m *Manager) createToken(userID int) (string, error) {
 	expirationTime := time.Now().Add(EXPIREDAT * time.Minute)
 
 	claims := &Claims{
-		Username: username,
+		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},

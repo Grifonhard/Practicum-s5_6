@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -26,13 +27,19 @@ func New(uri string) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	err = db.CreateTables()
+	if err != nil {
+		return nil, err
+	}
+
 	return &db, nil
 }
 
 func (db *DB) CreateTables() error {
 	// TODO связь с BalanceTransactions обновить
 	_, err := db.p.Exec(context.Background(), `
-		CREATE TABLE IF NOT EXISTS User (
+		CREATE TABLE IF NOT EXISTS Users (
 			id SERIAL PRIMARY KEY,
 			username VARCHAR(255) UNIQUE NOT NULL,
 			password_hash VARCHAR(255) NOT NULL,
@@ -40,14 +47,14 @@ func (db *DB) CreateTables() error {
 		);
 		CREATE TABLE IF NOT EXISTS Orderu (
 			id INT UNIQUE NOT NULL,
-			user_id INT REFERENCES User(id) ON DELETE CASCADE,
+			user_id INT REFERENCES Users(id) ON DELETE CASCADE,
 			status INT NOT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
 		CREATE TABLE IF NOT EXISTS BalanceTransactions (
 			id SERIAL PRIMARY KEY,
-			user_id INT REFERENCES User(id) ON DELETE CASCADE,
+			user_id INT REFERENCES Users(id) ON DELETE CASCADE,
 			order_id INT REFERENCES Orderu(id) ON DELETE CASCADE,
 			sum INT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -60,8 +67,13 @@ func (db *DB) CreateTables() error {
 }
 
 func (db *DB) InsertUser(username, passwordHash string) error {
+
+	logger.Debug("repository insert user uname: %s pw: %s", username, passwordHash)
+
 	_, err := db.p.Exec(context.Background(),
-		"INSERT INTO User (username, password_hash) VALUES ($1, $2)", username, passwordHash)
+		"INSERT INTO Users (username, password_hash) VALUES ($1, $2)", username, passwordHash)
+
+	defer logger.Debug("repository insert user error: %+v", &err)
 
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == ERRDUPLICATE {
@@ -72,8 +84,13 @@ func (db *DB) InsertUser(username, passwordHash string) error {
 }
 
 func (db *DB) InsertOrder(userID, orderID int) error {
+
+	logger.Debug("repository insert order userId: %d orderId: %d", userID, orderID)
+
 	_, err := db.p.Exec(context.Background(),
 		"INSERT INTO Orderu (user_id, id, status) VALUES ($1, $2, $3)", userID, orderID, model.NEWINT)
+	
+	defer logger.Debug("repository insert order error: %+v", &err)
 
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == ERRDUPLICATE {
@@ -84,23 +101,41 @@ func (db *DB) InsertOrder(userID, orderID int) error {
 }
 
 func (db *DB) UpdateOrderStatus(orderID, status int) error {
+
+	logger.Debug("repository update order status orderId: %d status: %d", orderID, status)
+
 	_, err := db.p.Exec(context.Background(), "UPDATE Orderu SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", status, orderID)
+
+	defer logger.Debug("repository update order status error: %+v", &err)
+
 	if err != nil {
 		return fmt.Errorf("failed to update order status: %v", err)
 	}
 	return nil
 }
 
-func (db *DB) InsertBalanceTransaction(userID, orderId, sum int) error {
+func (db *DB) InsertBalanceTransaction(userID, orderID, sum int) error {
+
+	logger.Debug("repository insert balance transaction userId: %d orderId: %d sum: %d", userID, orderID, sum)
+
 	_, err := db.p.Exec(context.Background(),
-		"INSERT INTO BalanceTransactions (user_id, order_id, sum) VALUES ($1, $2, $3)", userID, orderId, sum)
+		"INSERT INTO BalanceTransactions (user_id, order_id, sum) VALUES ($1, $2, $3)", userID, orderID, sum)
+
+	defer logger.Debug("repository insert balance transaction error: %+v", &err)
+
 	return err
 }
 
 func (db *DB) GetUser(uname string) (*model.User, error) {
+
+	logger.Debug("repository get user uname: %s", uname)
+
 	var user model.User
-	err := db.p.QueryRow(context.Background(), "SELECT id, username, password_hash, created_at FROM User WHERE username = $1", uname).
-		Scan(&user.Id, &user.Username, &user.Password_hash, &user.Created)
+	err := db.p.QueryRow(context.Background(), "SELECT id, username, password_hash, created_at FROM Users WHERE username = $1", uname).
+		Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Created)
+
+	defer logger.Debug("repository get user error: %+v", &err)
+
 	if err == pgx.ErrNoRows {
 		return nil, ErrUserNotFound
 	} else if err != nil {
@@ -110,23 +145,54 @@ func (db *DB) GetUser(uname string) (*model.User, error) {
 	return &user, nil
 }
 
-func (db *DB) GetOrder(orderId int) (*model.Order, error) {
-	var orderDb model.OrderDB
+func (db *DB) GetUserByID(id int) (*model.User, error) {
+
+	logger.Debug("repository get user by id: %d", id)
+
+	var user model.User
+	err := db.p.QueryRow(context.Background(), "SELECT id, username, password_hash, created_at FROM Users WHERE id = $1", id).
+		Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Created)
+
+	defer logger.Debug("repository get user by id error: %+v", &err)
+
+	if err == pgx.ErrNoRows {
+		return nil, ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (db *DB) GetOrder(orderID int) (*model.Order, error) {
+
+	logger.Debug("repository get order id: %d", orderID)
+
+	var orderDB model.OrderDB
 	var order model.Order
-	err := db.p.QueryRow(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE order_id = $1", orderId).
-		Scan(&orderDb.Id, &orderDb.UserId, &orderDb.Status, &orderDb.Created)
+	err := db.p.QueryRow(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE order_id = $1", orderID).
+		Scan(&orderDB.ID, &orderDB.UserID, &orderDB.Status, &orderDB.Created)
+
+	defer logger.Debug("repository get order error: %+v", &err)
+
 	if err == pgx.ErrNoRows {
 		return nil, ErrOrderNotFound
 	} else if err != nil {
 		return nil, err
 	}
 
-	order.HydrateDB(&orderDb)
+	order.HydrateDB(&orderDB)
 	return &order, nil
 }
 
-func (db *DB) GetOrders(userId int) ([]model.Order, error) {
-	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE user_id = $1", userId)
+func (db *DB) GetOrders(userID int) ([]model.Order, error) {
+
+	logger.Debug("repository GetOrders userid: %d", userID)
+
+	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE user_id = $1", userID)
+
+	defer logger.Debug("repository GetOrders error: %+v", &err)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to query orders: %v", err)
 	}
@@ -134,15 +200,15 @@ func (db *DB) GetOrders(userId int) ([]model.Order, error) {
 
 	var orders []model.Order
 	for rows.Next() {
-		var orderDb model.OrderDB
+		var orderDB model.OrderDB
 		var order model.Order
 
-		err := rows.Scan(&orderDb.Id, &orderDb.UserId, &orderDb.Status, &orderDb.Created)
+		err := rows.Scan(&orderDB.ID, &orderDB.UserID, &orderDB.Status, &orderDB.Created)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan order: %v", err)
 		}
 
-		order.HydrateDB(&orderDb)
+		order.HydrateDB(&orderDB)
 		orders = append(orders, order)
 	}
 
@@ -157,8 +223,14 @@ func (db *DB) GetOrders(userId int) ([]model.Order, error) {
 	return orders, nil
 }
 
-func (db *DB) GetNotComplitedOrders(userId int) ([]model.Order, error) {
-	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE user_id = $1 AND status IN (0, 1)", userId)
+func (db *DB) GetNotComplitedOrders() ([]model.Order, error) {
+
+	logger.Debug("repository GetNotComplitedOrders")
+
+	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE status IN (0, 1)")
+
+	defer logger.Debug("repository GetNotComplitedOrders error: %+v", &err)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to query orders: %v", err)
 	}
@@ -166,15 +238,15 @@ func (db *DB) GetNotComplitedOrders(userId int) ([]model.Order, error) {
 
 	var orders []model.Order
 	for rows.Next() {
-		var orderDb model.OrderDB
+		var orderDB model.OrderDB
 		var order model.Order
 
-		err := rows.Scan(&orderDb.Id, &orderDb.UserId, &orderDb.Status, &orderDb.Created)
+		err := rows.Scan(&orderDB.ID, &orderDB.UserID, &orderDB.Status, &orderDB.Created)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan order: %v", err)
 		}
 
-		order.HydrateDB(&orderDb)
+		order.HydrateDB(&orderDB)
 		orders = append(orders, order)
 	}
 
@@ -189,8 +261,14 @@ func (db *DB) GetNotComplitedOrders(userId int) ([]model.Order, error) {
 	return orders, nil
 }
 
-func (db *DB) GetTransactionsByOrder(orderId int) ([]model.BalanceTransactions, error) {
-	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE order_id = $1", orderId)
+func (db *DB) GetTransactionsByOrder(orderID int) ([]model.BalanceTransactions, error) {
+
+	logger.Debug("repository GetTransactionsByOrder: %d", orderID)
+
+	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE order_id = $1", orderID)
+
+	defer logger.Debug("repository GetTransactionsByOrder error: %+v", &err)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to query transactions: %v", err)
 	}
@@ -200,7 +278,7 @@ func (db *DB) GetTransactionsByOrder(orderId int) ([]model.BalanceTransactions, 
 	for rows.Next() {
 		var transact model.BalanceTransactions
 
-		err := rows.Scan(&transact.Id, &transact.UserId, &transact.OrderId, &transact.Sum, &transact.Created)
+		err = rows.Scan(&transact.ID, &transact.UserID, &transact.OrderID, &transact.Sum, &transact.Created)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan transaction: %v", err)
 		}
@@ -219,8 +297,14 @@ func (db *DB) GetTransactionsByOrder(orderId int) ([]model.BalanceTransactions, 
 	return transacts, nil
 }
 
-func (db *DB) GetTransactions(userId int) ([]model.BalanceTransactions, error) {
-	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE user_id = $1", userId)
+func (db *DB) GetTransactions(userID int) ([]model.BalanceTransactions, error) {
+
+	logger.Debug("repository GetTransactions userId: %d", userID)
+
+	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE user_id = $1", userID)
+
+	defer logger.Debug("repository GetTransactions error: %+v", &err)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to query transactions: %v", err)
 	}
@@ -230,7 +314,7 @@ func (db *DB) GetTransactions(userId int) ([]model.BalanceTransactions, error) {
 	for rows.Next() {
 		var transact model.BalanceTransactions
 
-		err := rows.Scan(&transact.Id, &transact.UserId, &transact.OrderId, &transact.Sum, &transact.Created)
+		err := rows.Scan(&transact.ID, &transact.UserID, &transact.OrderID, &transact.Sum, &transact.Created)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan transaction: %v", err)
 		}

@@ -3,16 +3,16 @@ package model
 import "time"
 
 type OrderDB struct {
-	Id      int
-	UserId  int
+	ID      int
+	UserID  int
 	Status  int
 	Created time.Time
 	Updated time.Time
 }
 
 func (o *Order) HydrateDB(odb *OrderDB) {
-	o.Id = odb.Id
-	o.UserId = odb.UserId
+	o.ID = odb.ID
+	o.UserID = odb.UserID
 	o.Created = odb.Created
 	switch odb.Status {
 	case NEWINT:
