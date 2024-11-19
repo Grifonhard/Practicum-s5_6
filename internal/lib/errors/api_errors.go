@@ -60,7 +60,7 @@ func NewBadRequest(reason string) *Error {
 func NewInternal() *Error {
 	return &Error{
 		Type:    Internal,
-		Message: fmt.Sprintf("Internal server error."),
+		Message: "Internal server error.",
 	}
 }
 
@@ -76,7 +76,7 @@ func NewNotFound(name string, value string) *Error {
 func NewServiceUnavailable() *Error {
 	return &Error{
 		Type:    ServiceUnavailable,
-		Message: fmt.Sprintf("Service unavailable or timed out"),
+		Message: "Service unavailable or timed out",
 	}
 }
 

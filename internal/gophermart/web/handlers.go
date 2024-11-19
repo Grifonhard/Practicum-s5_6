@@ -262,6 +262,7 @@ func Withdrawals(m *order.Manager) gin.HandlerFunc {
 		if err != nil {
 			if errors.Is(err, repository.ErrTransNotFound) {
 				c.JSON(http.StatusNoContent, ws)
+				return
 			}
 			logger.Error("fail withdrawals: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})

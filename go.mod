@@ -1,6 +1,6 @@
 module github.com/Grifonhard/Practicum-s5_6
 
-go 1.22.5
+go 1.23
 
 require (
 	github.com/JGLTechnologies/gin-rate-limit v1.5.4
