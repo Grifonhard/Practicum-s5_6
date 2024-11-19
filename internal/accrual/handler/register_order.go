@@ -2,10 +2,12 @@ package handler
 
 import (
 	"errors"
-	"github.com/Grifonhard/Practicum-s5_6/internal/lib/validate"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
+
+	"github.com/Grifonhard/Practicum-s5_6/internal/lib/validate"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -62,6 +64,8 @@ func (h *Handler) OrderRegistrationHandler(c *gin.Context) {
 		})
 		return
 	}
+
+	fmt.Printf("order num registed: %d\n", number)
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"number": req.Order,
