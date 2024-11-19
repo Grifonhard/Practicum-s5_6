@@ -11,6 +11,7 @@ import (
 
 const (
 	USERID = "username"
+	COOKIEAUTH = "auth_token"
 )
 
 func Authentication(am *auth.Manager) gin.HandlerFunc {
@@ -18,7 +19,7 @@ func Authentication(am *auth.Manager) gin.HandlerFunc {
 
 		logger.Debug("middleware %+v", c.Request)
 
-		authCookie, err := c.Cookie("auth_token")
+		authCookie, err := c.Cookie(COOKIEAUTH)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication cookie required"})
 			c.Abort()

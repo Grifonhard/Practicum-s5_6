@@ -1,8 +1,10 @@
 package order
 
 import (
+	"errors"
 	"time"
 
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
 )
@@ -17,6 +19,10 @@ func (m *Manager) updateOrdersInfoLoop() {
 	for {
 		orders, err := m.repository.GetNotComplitedOrders()
 		if err != nil {
+			if errors.Is(err, repository.ErrOrdersNotFound) {
+				time.Sleep(TIMESLEEPLOOP)
+				continue
+			}
 			logger.Error("fail while get not complited orders, error: %v", err)
 		}
 	

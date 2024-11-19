@@ -42,7 +42,7 @@ func Registration(m *auth.Manager) gin.HandlerFunc {
 		}
 
 		c.SetCookie(
-			"auth_token",      // Имя cookie
+			COOKIEAUTH,        // Имя cookie
 			token,             // Значение cookie
 			auth.EXPIREDAT*60, // Время жизни в секундах
 			"/",               // Путь, где cookie будет доступен
@@ -79,7 +79,7 @@ func Login(m *auth.Manager) gin.HandlerFunc {
 		}
 
 		c.SetCookie(
-			"auth_token",      // Имя cookie
+			COOKIEAUTH,        // Имя cookie
 			token,             // Значение cookie
 			auth.EXPIREDAT*60, // Время жизни в секундах
 			"/",               // Путь, где cookie будет доступен
@@ -114,19 +114,14 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 			return
 		}
 
-		var orderID string
-		if err := c.ShouldBind(&orderID); err != nil {
+		var orderID int
+		err := c.ShouldBind(&orderID)
+		if err != nil {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid request format"})
 			return
 		}
 
-		orderIDInt, err := strconv.Atoi(orderID)
-		if err != nil {
-			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "orderID must be a number"})
-			return
-		}
-
-		err = m.AddOrder(userID, orderIDInt)
+		err = m.AddOrder(userID, orderID)
 		if err != nil {
 			if errors.Is(err, order.ErrOrderExistThis) {
 				c.JSON(http.StatusOK, "success")
