@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/http/accrual"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/auth"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/http/accrual"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/order"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/web"
@@ -23,12 +23,12 @@ const (
 type CFG struct {
 	Address *string `env:"RUN_ADDRESS"`
 	Accrual *string `env:"ACCRUAL_SYSTEM_ADDRESS"`
-	DBURI *string `env:"DATABASE_URI"`
+	DBURI   *string `env:"DATABASE_URI"`
 }
 
 func main() {
 	address := flag.String("a", NODATA, "адрес гофемарта")
-	accrual := flag.String("r", NODATA, "адрес сервиса accrual")
+	accrualUrl := flag.String("r", NODATA, "адрес сервиса accrualUrl")
 	uri := flag.String("d", NODATA, "адрес db")
 
 	flag.Parse()
@@ -50,13 +50,13 @@ func main() {
 		address = cfg.Address
 	}
 	if cfg.Accrual != nil {
-		accrual = cfg.Accrual
+		accrualUrl = cfg.Accrual
 	}
 	if cfg.DBURI != nil {
 		uri = cfg.DBURI
 	}
 
-	am, om, err := initServices(uri, accrual)
+	am, om, err := initServices(uri, accrualUrl)
 	if err != nil {
 		logger.Error("init services error: %v", err)
 		log.Fatal(err)
@@ -84,7 +84,7 @@ func initRouter(am *auth.Manager, om *order.Manager) *gin.Engine {
 	return router
 }
 
-func initServices(uri, accUri *string) (*auth.Manager, *order.Manager, error) {
+func initServices(uri, accURI *string) (*auth.Manager, *order.Manager, error) {
 	transMu, err := transactions.New()
 	if err != nil {
 		return nil, nil, err
@@ -93,7 +93,7 @@ func initServices(uri, accUri *string) (*auth.Manager, *order.Manager, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	acc, err := accrual.New(*accUri)
+	acc, err := accrual.New(*accURI)
 	if err != nil {
 		return nil, nil, err
 	}
