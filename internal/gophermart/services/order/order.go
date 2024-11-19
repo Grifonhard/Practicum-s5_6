@@ -119,7 +119,7 @@ func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 	for _, t := range ts {
 		sum += t.Sum
 		if sum < 0 {
-			withdrawn -= t.Sum
+			withdrawn += (-1) * t.Sum
 		}
 	}
 
