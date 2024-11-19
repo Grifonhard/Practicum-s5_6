@@ -40,31 +40,31 @@ func GetWithdrawFront(order, sum int, processed time.Time) *WithdrawlDto {
 	return &w
 }
 
-func (o OrderDto) MarshalJSON() ([]byte, error) {
+func (of OrderDto) MarshalJSON() ([]byte, error) {
 	type Alias OrderDto
 	aux := struct {
 		Alias
 		Accrual *int `json:"accrual,omitempty"`
 	}{
-		Alias:   Alias(o),
+		Alias:   Alias(of),
 		Accrual: nil,
 	}
 
-	if o.Accrual != 0 {
-		aux.Accrual = &o.Accrual
+	if of.Accrual != 0 {
+		aux.Accrual = &of.Accrual
 	}
 
 	return json.Marshal(aux)
 }
 
 // UnmarshalJSON - кастомное анмаршалирование
-func (o *OrderDto) UnmarshalJSON(data []byte) error {
+func (of *OrderDto) UnmarshalJSON(data []byte) error {
 	type Alias OrderDto
 	aux := struct {
 		Alias
 		Accrual *int `json:"accrual"`
 	}{
-		Alias: Alias(*o),
+		Alias: Alias(*of),
 	}
 
 	if err := json.Unmarshal(data, &aux); err != nil {
@@ -72,9 +72,9 @@ func (o *OrderDto) UnmarshalJSON(data []byte) error {
 	}
 
 	if aux.Accrual != nil {
-		o.Accrual = *aux.Accrual
+		of.Accrual = *aux.Accrual
 	} else {
-		o.Accrual = 0
+		of.Accrual = 0
 	}
 
 	return nil

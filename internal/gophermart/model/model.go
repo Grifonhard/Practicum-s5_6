@@ -25,13 +25,13 @@ const (
 type User struct {
 	ID            int
 	Username      string
-	Password_hash string
+	PasswordHash string
 	Created       time.Time
 }
 
 type Order struct {
 	ID      int
-	UserId  int
+	UserID  int
 	Status  string
 	Created time.Time
 	Updated time.Time
@@ -39,8 +39,8 @@ type Order struct {
 
 type BalanceTransactions struct {
 	ID      int
-	UserId  int
-	OrderId int
+	UserID  int
+	OrderID int
 	Sum     int
 	Created time.Time
 }

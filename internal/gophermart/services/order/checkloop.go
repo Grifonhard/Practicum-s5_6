@@ -54,7 +54,7 @@ func (m *Manager) updateOrderInfo(o *model.Order) error {
 	}
 
 	if info.Status == model.PROCESSED && isUpdate {
-		err = m.repository.InsertBalanceTransaction(o.UserId, o.ID, accrual)
+		err = m.repository.InsertBalanceTransaction(o.UserID, o.ID, accrual)
 		if err != nil {
 			return err
 		}

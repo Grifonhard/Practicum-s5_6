@@ -83,7 +83,7 @@ func (m *Manager) Login(username, password string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if !checkPasswordHash(password, user.Password_hash) {
+	if !checkPasswordHash(password, user.PasswordHash) {
 		return "", ErrWrongPassword
 	}
 	token, err := m.createToken(user.ID)

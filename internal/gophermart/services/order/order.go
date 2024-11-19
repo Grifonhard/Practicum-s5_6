@@ -52,10 +52,10 @@ func (m *Manager) AddOrder(userID int, orderID int) error {
 			logger.Error("fail while get order: %v", err)
 			return err
 		}
-		if order.UserId == userID {
+		if order.UserID == userID {
 			return ErrOrderExistThis
 		} else {
-			return fmt.Errorf("%w user id: %d", ErrOrderExistAnother, order.UserId)
+			return fmt.Errorf("%w user id: %d", ErrOrderExistAnother, order.UserID)
 		}
 	}
 
@@ -191,7 +191,7 @@ func (m *Manager) Withdrawls(userID int) ([]model.WithdrawlDto, error) {
 
 	for _, t := range transs {
 		if t.Sum < 0 {
-			withdrawl := model.GetWithdrawFront(t.OrderId, t.Sum*(-1), t.Created)
+			withdrawl := model.GetWithdrawFront(t.OrderID, t.Sum*(-1), t.Created)
 			result = append(result, *withdrawl)
 		}
 	}
@@ -227,12 +227,12 @@ func (m *Manager) convertToFrontOrder(o *model.Order) (*model.OrderDto, error) {
 	return &orderFront, nil
 }
 
-func checkLuhn(orderId int) error {
+func checkLuhn(orderID int) error {
 	var sum int
 	shouldDouble := false
 
-	for orderId > 0 {
-		digit := orderId % 10
+	for orderID > 0 {
+		digit := orderID % 10
 
 		if shouldDouble {
 			digit <<= 1
@@ -243,7 +243,7 @@ func checkLuhn(orderId int) error {
 
 		sum += digit
 		shouldDouble = !shouldDouble
-		orderId /= 10
+		orderID /= 10
 	}
 
 	if sum%10 == 0 {

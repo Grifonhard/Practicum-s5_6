@@ -22,7 +22,7 @@ const (
 
 type CFG struct {
 	Address *string `env:"RUN_ADDRESS"`
-	DbUri *string `env:"DATABASE_URI"`
+	DBURI *string `env:"DATABASE_URI"`
 }
 
 func main() {
@@ -47,8 +47,8 @@ func main() {
 	if cfg.Address != nil {
 		address = cfg.Address
 	}
-	if cfg.DbUri != nil {
-		uri = cfg.DbUri
+	if cfg.DBURI != nil {
+		uri = cfg.DBURI
 	}
 
 	am, om, err := initServices(uri)

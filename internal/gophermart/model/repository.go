@@ -4,7 +4,7 @@ import "time"
 
 type OrderDB struct {
 	ID      int
-	UserId  int
+	UserID  int
 	Status  int
 	Created time.Time
 	Updated time.Time
@@ -12,7 +12,7 @@ type OrderDB struct {
 
 func (o *Order) HydrateDB(odb *OrderDB) {
 	o.ID = odb.ID
-	o.UserId = odb.UserId
+	o.UserID = odb.UserID
 	o.Created = odb.Created
 	switch odb.Status {
 	case NEWINT:

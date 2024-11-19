@@ -126,7 +126,7 @@ func (db *DB) GetUser(uname string) (*model.User, error) {
 
 	var user model.User
 	err := db.p.QueryRow(context.Background(), "SELECT id, username, password_hash, created_at FROM User WHERE username = $1", uname).
-		Scan(&user.ID, &user.Username, &user.Password_hash, &user.Created)
+		Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Created)
 
 	defer logger.Debug("repository get user error: %+v", &err)
 
@@ -145,7 +145,7 @@ func (db *DB) GetUserByID(id int) (*model.User, error) {
 
 	var user model.User
 	err := db.p.QueryRow(context.Background(), "SELECT id, username, password_hash, created_at FROM User WHERE id = $1", id).
-		Scan(&user.ID, &user.Username, &user.Password_hash, &user.Created)
+		Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Created)
 
 	defer logger.Debug("repository get user by id error: %+v", &err)
 
@@ -194,15 +194,15 @@ func (db *DB) GetOrders(userID int) ([]model.Order, error) {
 
 	var orders []model.Order
 	for rows.Next() {
-		var orderDb model.OrderDB
+		var orderDB model.OrderDB
 		var order model.Order
 
-		err := rows.Scan(&orderDb.ID, &orderDb.UserId, &orderDb.Status, &orderDb.Created)
+		err := rows.Scan(&orderDB.ID, &orderDB.UserId, &orderDB.Status, &orderDB.Created)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan order: %v", err)
 		}
 
-		order.HydrateDB(&orderDb)
+		order.HydrateDB(&orderDB)
 		orders = append(orders, order)
 	}
 
@@ -232,15 +232,15 @@ func (db *DB) GetNotComplitedOrders() ([]model.Order, error) {
 
 	var orders []model.Order
 	for rows.Next() {
-		var orderDb model.OrderDB
+		var orderDB model.OrderDB
 		var order model.Order
 
-		err := rows.Scan(&orderDb.ID, &orderDb.UserId, &orderDb.Status, &orderDb.Created)
+		err := rows.Scan(&orderDB.ID, &orderDB.UserId, &orderDB.Status, &orderDB.Created)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan order: %v", err)
 		}
 
-		order.HydrateDB(&orderDb)
+		order.HydrateDB(&orderDB)
 		orders = append(orders, order)
 	}
 
@@ -255,11 +255,11 @@ func (db *DB) GetNotComplitedOrders() ([]model.Order, error) {
 	return orders, nil
 }
 
-func (db *DB) GetTransactionsByOrder(orderId int) ([]model.BalanceTransactions, error) {
+func (db *DB) GetTransactionsByOrder(orderID int) ([]model.BalanceTransactions, error) {
 
-	logger.Debug("repository GetTransactionsByOrder: %d", orderId)
+	logger.Debug("repository GetTransactionsByOrder: %d", orderID)
 
-	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE order_id = $1", orderId)
+	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE order_id = $1", orderID)
 
 	defer logger.Debug("repository GetTransactionsByOrder error: %+v", &err)
 
@@ -272,7 +272,7 @@ func (db *DB) GetTransactionsByOrder(orderId int) ([]model.BalanceTransactions, 
 	for rows.Next() {
 		var transact model.BalanceTransactions
 
-		err = rows.Scan(&transact.ID, &transact.UserId, &transact.OrderId, &transact.Sum, &transact.Created)
+		err = rows.Scan(&transact.ID, &transact.UserID, &transact.OrderID, &transact.Sum, &transact.Created)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan transaction: %v", err)
 		}
@@ -291,11 +291,11 @@ func (db *DB) GetTransactionsByOrder(orderId int) ([]model.BalanceTransactions, 
 	return transacts, nil
 }
 
-func (db *DB) GetTransactions(userId int) ([]model.BalanceTransactions, error) {
+func (db *DB) GetTransactions(userID int) ([]model.BalanceTransactions, error) {
 
-	logger.Debug("repository GetTransactions userId: %d", userId)
+	logger.Debug("repository GetTransactions userId: %d", userID)
 
-	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE user_id = $1", userId)
+	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE user_id = $1", userID)
 
 	defer logger.Debug("repository GetTransactions error: %+v", &err)
 
@@ -308,7 +308,7 @@ func (db *DB) GetTransactions(userId int) ([]model.BalanceTransactions, error) {
 	for rows.Next() {
 		var transact model.BalanceTransactions
 
-		err := rows.Scan(&transact.ID, &transact.UserId, &transact.OrderId, &transact.Sum, &transact.Created)
+		err := rows.Scan(&transact.ID, &transact.UserID, &transact.OrderID, &transact.Sum, &transact.Created)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan transaction: %v", err)
 		}
