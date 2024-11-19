@@ -27,6 +27,12 @@ func New(uri string) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	err = db.CreateTables()
+	if err != nil {
+		return nil, err
+	}
+
 	return &db, nil
 }
 
