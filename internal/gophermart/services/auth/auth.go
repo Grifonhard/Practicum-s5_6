@@ -93,7 +93,7 @@ func (m *Manager) Login(username, password string) (string, error) {
 	return token, nil
 }
 
-func (m *Manager) Authentication(token string) (string, error) {
+func (m *Manager) Authentication(token string) (int, error) {
 	
 	logger.Debug("auth Authentication")
 
@@ -102,10 +102,10 @@ func (m *Manager) Authentication(token string) (string, error) {
 	defer logger.Debug("auth Authentication error: %+v", &err)
 
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	user, err := m.p.GetUserById(claims.UserID)
-	return user.Username, err
+	user, err := m.p.GetUserByID(claims.UserID)
+	return user.ID, err
 }
 
 func (m *Manager) createToken(userID int) (string, error) {

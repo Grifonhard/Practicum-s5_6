@@ -139,7 +139,7 @@ func (db *DB) GetUser(uname string) (*model.User, error) {
 	return &user, nil
 }
 
-func (db *DB) GetUserById(id int) (*model.User, error) {
+func (db *DB) GetUserByID(id int) (*model.User, error) {
 
 	logger.Debug("repository get user by id: %d", id)
 
@@ -162,10 +162,10 @@ func (db *DB) GetOrder(orderID int) (*model.Order, error) {
 
 	logger.Debug("repository get order id: %d", orderID)
 
-	var orderDb model.OrderDB
+	var orderDB model.OrderDB
 	var order model.Order
 	err := db.p.QueryRow(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE order_id = $1", orderID).
-		Scan(&orderDb.ID, &orderDb.UserId, &orderDb.Status, &orderDb.Created)
+		Scan(&orderDB.ID, &orderDB.UserId, &orderDB.Status, &orderDB.Created)
 
 	defer logger.Debug("repository get order error: %+v", &err)
 
@@ -175,7 +175,7 @@ func (db *DB) GetOrder(orderID int) (*model.Order, error) {
 		return nil, err
 	}
 
-	order.HydrateDB(&orderDb)
+	order.HydrateDB(&orderDB)
 	return &order, nil
 }
 
