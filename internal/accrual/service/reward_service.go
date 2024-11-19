@@ -6,15 +6,10 @@ import (
 )
 
 func CalculateReward(good model.Good, accrual model.AccrualProgram) float64 {
-	var result float64
-
 	switch accrual.RewardType {
 	case model.RewardTypePoints:
-		result = float64(accrual.Reward)
-	case model.RewardTypePercent:
-		reward := math.Percent(int(accrual.Reward), int(good.Price))
-		result = float64(reward)
+		return accrual.Reward
+	default:
+		return math.Percent(accrual.Reward, good.Price)
 	}
-
-	return result
 }

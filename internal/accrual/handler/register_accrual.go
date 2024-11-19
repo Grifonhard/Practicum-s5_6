@@ -13,9 +13,9 @@ import (
 )
 
 type accrualRegistrationRequest struct {
-	Match      string `json:"match" required:"true"`
-	Reward     int64  `json:"reward" required:"true"`
-	RewardType string `json:"reward_type" required:"true"`
+	Match      string  `json:"match" required:"true"`
+	Reward     float64 `json:"reward" required:"true"`
+	RewardType string  `json:"reward_type" required:"true"`
 }
 
 func (h *Handler) AccrualRegistrationHandler(c *gin.Context) {

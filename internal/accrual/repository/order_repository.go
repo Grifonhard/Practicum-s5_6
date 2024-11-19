@@ -72,7 +72,7 @@ func (r *OrderRepository) GetOrderByNumber(ctx context.Context, number uint64) (
 	return &order, nil
 }
 
-func (r *OrderRepository) UpdateOrderAccrual(ctx context.Context, number uint64, accrual uint64) error {
+func (r *OrderRepository) UpdateOrderAccrual(ctx context.Context, number uint64, accrual float64) error {
 	query := `UPDATE accrual.orders
               SET accrual = $1,
                   status = $2

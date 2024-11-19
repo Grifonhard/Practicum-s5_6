@@ -48,7 +48,7 @@ func CreateTables(ctx context.Context, db *pgxpool.Pool) error {
         CREATE TABLE IF NOT EXISTS accrual.orders (
             number bigint PRIMARY KEY,
             status character varying(255),
-            accrual int,
+            accrual double precision,
             created_at timestamp with time zone
         );
         CREATE TABLE IF NOT EXISTS accrual.goods (

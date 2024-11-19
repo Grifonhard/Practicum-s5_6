@@ -71,7 +71,7 @@ func (s *AccrualService) calculateAccruals(ctx context.Context) {
 				slog.ErrorContext(ctx, "update order status", "err", err)
 			}
 
-			var orderAccrual uint64
+			var orderAccrual float64
 			for _, accrual := range accruals {
 				match := strings.ToLower(accrual.Match)
 
@@ -82,7 +82,7 @@ func (s *AccrualService) calculateAccruals(ctx context.Context) {
 
 				for _, good := range filteredGoods {
 					reward := CalculateReward(good, accrual)
-					orderAccrual += uint64(reward)
+					orderAccrual += reward
 				}
 			}
 

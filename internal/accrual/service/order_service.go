@@ -8,7 +8,7 @@ import (
 type orderRepository interface {
 	RegisterOrder(context.Context, uint64, []model.Good) error
 	GetOrderByNumber(context.Context, uint64) (*model.Order, error)
-	UpdateOrderAccrual(context.Context, uint64, uint64) error
+	UpdateOrderAccrual(context.Context, uint64, float64) error
 	UpdateOrderStatus(context.Context, uint64, string) error
 	GetAllOrders(context.Context) ([]model.Order, error)
 }
