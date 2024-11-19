@@ -117,15 +117,16 @@ func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 	logger.Warn("transactions: %+v", ts)
 
 	for _, t := range ts {
-		if t.Sum > 0 {
-			sum += t.Sum
-		}
+		sum += t.Sum
 		if sum < 0 {
 			withdrawn -= t.Sum
 		}
 	}
 
-	logger.Debug("order sum: %f", sum)
+	logger.Warn("check: %+v", model.BalanceDto{
+		Current:   sum,
+		Withdrawn: withdrawn,
+	})
 
 	return &model.BalanceDto{
 		Current:   sum,
