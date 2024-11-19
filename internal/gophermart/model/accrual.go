@@ -21,7 +21,7 @@ func (o *Order) ConvertAccrual(oA *OrderAccrual) (float64, int, error) {
 	o.Status = oA.Status
 	var status int
 	switch o.Status {
-	case NEW:
+	case "REGISTERED":
 		status = NEWINT
 	case PROCESSING:
 		status = PROCESSINGINT
