@@ -2,7 +2,6 @@ package web
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -133,8 +132,11 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 				c.JSON(http.StatusOK, "success")
 				return
 			}
-			if errors.Is(err, order.ErrOrderExistThis) {
-				c.JSON(http.StatusConflict, gin.H{"error": "no orders found"})
+			if errors.Is(err, order.ErrLuhnFail) {
+				c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "wrong order number"})
+			}
+			if errors.Is(err, order.ErrOrderExistAnother) {
+				c.JSON(http.StatusConflict, gin.H{"error": "you cann't access to this order"})
 				return
 			}
 			logger.Error("fail add order: %v", err)
@@ -224,8 +226,8 @@ func Withdraw(m *order.Manager) gin.HandlerFunc {
 		}
 
 		var req model.WithdrawRequest
-		if err := c.ShouldBindJSON(req); err != nil {
-			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "cann't parse json"})
 			return
 		}
 

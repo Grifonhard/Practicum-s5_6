@@ -44,8 +44,8 @@ func (m *Manager) AddOrder(userID int, orderID int) error {
 	if err != nil {
 		return err
 	}
-	err = m.repository.InsertOrder(userID, orderID)
 
+	err = m.repository.InsertOrder(userID, orderID)
 	if errors.Is(err, repository.ErrOrderExist) {
 		order, err := m.repository.GetOrder(orderID)
 		if err != nil {
@@ -129,7 +129,7 @@ func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 
 func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 
-	logger.Debug("order Withdraw userId: %d order: %s sum: %d", userID, order, sum)
+	logger.Debug("order Withdraw userId: %d order: %s sum: %f", userID, order, sum)
 
 	m.muTransaction.Lock(strconv.Itoa(userID))
 	defer m.muTransaction.Unlock(strconv.Itoa(userID))
@@ -150,7 +150,17 @@ func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 		return err
 	}
 
+	// списания - это транзакции со знаком -
+	sum *= (-1)
+
 	ts, err := m.repository.GetTransactionsByOrder(orderInt)
+	if errors.Is(err, repository.ErrTransNotFound) {
+		err = m.repository.InsertOrder(userID, orderInt)
+		if err != nil {
+			return err
+		}
+		return m.repository.InsertBalanceTransaction(userID, orderInt, sum)
+	}
 	if err != nil {
 		return err
 	}
@@ -162,10 +172,7 @@ func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 		return ErrAlreadyDebited
 	default:
 		return ErrTooMuchTransact
-	}
-
-	// списания - это транзакции со знаком -
-	sum *= (-1)
+	}	
 
 	return m.repository.InsertBalanceTransaction(userID, orderInt, sum)
 }
