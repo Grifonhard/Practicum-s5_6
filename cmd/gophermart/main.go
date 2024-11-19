@@ -64,7 +64,7 @@ func main() {
 
 	router := initRouter(am, om)
 
-	logger.Debug("env addr: %s, uri: %s accUri: %s", *cfg.Address, *cfg.DBURI, cfg.Accrual)
+	logger.Debug("env addr: %s, uri: %s accUri: %s", *cfg.Address, *cfg.DBURI, *cfg.Accrual)
 	fmt.Println("Server start")
 	log.Fatal(router.Run(*address))
 }
