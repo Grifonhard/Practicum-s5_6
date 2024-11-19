@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
 )
 
@@ -41,8 +40,6 @@ func (m *Manager) AccrualReq(orderID int) (*model.OrderAccrual, error) {
 		if err := json.Unmarshal(body, &result); err != nil {
 			return nil, err
 		}
-		logger.Warn("request to accrual: %d", orderID)
-		logger.Warn("from accrual: %+v", result)
 		return &result, nil
 
 	case http.StatusNoContent:

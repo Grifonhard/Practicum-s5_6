@@ -77,6 +77,8 @@ func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 		return orders[i].Created.Before(orders[j].Created)
 	})
 
+	logger.Warn("list: %v", orders)
+
 	// часть получения инфы о заказах, по которым ещё нет данных
 	// собираем недостающую инфу
 	var ordersFront []model.OrderDto
@@ -87,7 +89,6 @@ func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 		}
 		if errors.Is(err, ErrOrderInvalid) {
 			logger.Debug("order is invalid: %v", o)
-			continue
 		}
 		if err != nil {
 			logger.Error("order %+v convert error: %v", o, err)

@@ -151,7 +151,7 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 func ListOrders(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		logger.Warn("handlers ListOrders %+v", c.Request)
+		logger.Debug("handlers ListOrders %+v", c.Request)
 
 		userIDinterface, exists := c.Get(USERID)
 		if !exists {
@@ -172,7 +172,7 @@ func ListOrders(m *order.Manager) gin.HandlerFunc {
 				return
 			}
 			logger.Error("fail list orders: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
