@@ -33,7 +33,7 @@ func New(uri string) (*DB, error) {
 func (db *DB) CreateTables() error {
 	// TODO связь с BalanceTransactions обновить
 	_, err := db.p.Exec(context.Background(), `
-		CREATE TABLE IF NOT EXISTS User (
+		CREATE TABLE IF NOT EXISTS Users (
 			id SERIAL PRIMARY KEY,
 			username VARCHAR(255) UNIQUE NOT NULL,
 			password_hash VARCHAR(255) NOT NULL,
@@ -65,7 +65,7 @@ func (db *DB) InsertUser(username, passwordHash string) error {
 	logger.Debug("repository insert user uname: %s pw: %s", username, passwordHash)
 
 	_, err := db.p.Exec(context.Background(),
-		"INSERT INTO User (username, password_hash) VALUES ($1, $2)", username, passwordHash)
+		"INSERT INTO Users (username, password_hash) VALUES ($1, $2)", username, passwordHash)
 
 	defer logger.Debug("repository insert user error: %+v", &err)
 
@@ -125,7 +125,7 @@ func (db *DB) GetUser(uname string) (*model.User, error) {
 	logger.Debug("repository get user uname: %s", uname)
 
 	var user model.User
-	err := db.p.QueryRow(context.Background(), "SELECT id, username, password_hash, created_at FROM User WHERE username = $1", uname).
+	err := db.p.QueryRow(context.Background(), "SELECT id, username, password_hash, created_at FROM Users WHERE username = $1", uname).
 		Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Created)
 
 	defer logger.Debug("repository get user error: %+v", &err)
@@ -144,7 +144,7 @@ func (db *DB) GetUserByID(id int) (*model.User, error) {
 	logger.Debug("repository get user by id: %d", id)
 
 	var user model.User
-	err := db.p.QueryRow(context.Background(), "SELECT id, username, password_hash, created_at FROM User WHERE id = $1", id).
+	err := db.p.QueryRow(context.Background(), "SELECT id, username, password_hash, created_at FROM Users WHERE id = $1", id).
 		Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Created)
 
 	defer logger.Debug("repository get user by id error: %+v", &err)
