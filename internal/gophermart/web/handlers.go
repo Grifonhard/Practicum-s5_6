@@ -151,7 +151,7 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 func ListOrders(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		logger.Debug("handlers ListOrders %+v", c.Request)
+		logger.Warn("handlers ListOrders %+v", c.Request)
 
 		userIDinterface, exists := c.Get(USERID)
 		if !exists {

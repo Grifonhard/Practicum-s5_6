@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	TIMESLEEPLOOP = 300 * time.Millisecond
+	TIMESLEEPLOOP = 10 * time.Millisecond
 )
 
 func (m *Manager) updateOrdersInfoLoop() {
