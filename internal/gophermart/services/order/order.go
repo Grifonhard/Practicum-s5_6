@@ -38,17 +38,14 @@ func (m *Manager) AddOrder(userID int, orderID int) error {
 	logger.Debug("order AddOrder userId: %d orderId: %d", userID, orderID)
 
 	err := checkLuhn(orderID)
-	if err != nil {
-		return err
-	}
 
 	defer logger.Debug("order AddOrder error: %+v", &err)
 
 	if err != nil {
 		return err
 	}
-	err = m.repository.InsertOrder(userID, orderID)
 
+	err = m.repository.InsertOrder(userID, orderID)
 	if errors.Is(err, repository.ErrOrderExist) {
 		order, err := m.repository.GetOrder(orderID)
 		if err != nil {
