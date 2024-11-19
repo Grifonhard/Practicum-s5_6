@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/accrual"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/http/accrual"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/auth"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/order"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/order/storage"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/web"
 	"github.com/caarlos0/env/v10"
@@ -96,7 +96,7 @@ func initServices(uri *string) (*auth.Manager, *order.Manager, error) {
 		return nil, nil, err
 	}
 
-	authM, err := auth.New(db, transMu, st)
+	authM, err := auth.New(db, transMu)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -38,7 +38,7 @@ func New(db *repository.DB, t *transactions.Mutex) (*Manager, error) {
 
 // TODO TokenClaims
 type Claims struct {
-	Username string `json:"username"`
+	UserID int `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
@@ -54,7 +54,11 @@ func (m *Manager) Registration(username, password string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	token, err := m.createToken(username, password)
+	user, err := m.p.GetUser(username)
+	if err != nil {
+		return "", err
+	}
+	token, err := m.createToken(user.Id)
 	if err != nil {
 		return "", err
 	}
@@ -69,7 +73,7 @@ func (m *Manager) Login(username, password string) (string, error) {
 	if !checkPasswordHash(password, user.Password_hash) {
 		return "", ErrWrongPassword
 	}
-	token, err := m.createToken(username, password)
+	token, err := m.createToken(user.Id)
 	if err != nil {
 		return "", err
 	}
@@ -81,15 +85,15 @@ func (m *Manager) Authentication(token string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	user, err := m.p.GetUser(claims.Username)
+	user, err := m.p.GetUserById(claims.UserID)
 	return user.Username, err
 }
 
-func (m *Manager) createToken(username, password string) (string, error) {
+func (m *Manager) createToken(userID int) (string, error) {
 	expirationTime := time.Now().Add(EXPIREDAT * time.Minute)
 
 	claims := &Claims{
-		Username: username,
+		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},

@@ -110,6 +110,19 @@ func (db *DB) GetUser(uname string) (*model.User, error) {
 	return &user, nil
 }
 
+func (db *DB) GetUserById(id int) (*model.User, error) {
+	var user model.User
+	err := db.p.QueryRow(context.Background(), "SELECT id, username, password_hash, created_at FROM User WHERE id = $1", id).
+		Scan(&user.Id, &user.Username, &user.Password_hash, &user.Created)
+	if err == pgx.ErrNoRows {
+		return nil, ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (db *DB) GetOrder(orderId int) (*model.Order, error) {
 	var orderDb model.OrderDB
 	var order model.Order
