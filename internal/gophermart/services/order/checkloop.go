@@ -2,11 +2,12 @@ package order
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 )
 
 const (
@@ -44,16 +45,19 @@ func (m *Manager) updateOrderInfo(o *model.Order) error {
 
 	info, err := m.accrual.AccrualReq(o.ID)
 	if err != nil {
+		fmt.Println(1)
 		return err
 	}
 
 	if info.Status != o.Status {
 		accrual, status, err = newOrder.ConvertAccrual(info)
 		if err != nil {
+			fmt.Println(2)
 			return err
 		}
 		err = m.repository.UpdateOrderStatus(o.ID, status)
 		if err != nil {
+			fmt.Println(3)
 			return err
 		}
 		isUpdate = true
@@ -62,6 +66,7 @@ func (m *Manager) updateOrderInfo(o *model.Order) error {
 	if info.Status == model.PROCESSED && isUpdate {
 		err = m.repository.InsertBalanceTransaction(o.UserID, o.ID, accrual)
 		if err != nil {
+			fmt.Println(4)
 			return err
 		}
 	}
