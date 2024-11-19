@@ -121,6 +121,8 @@ func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 		}
 	}
 
+	logger.Debug("order sum: %f", sum)
+
 	return &model.BalanceDto{
 		Current:   sum,
 		Withdrawn: withdrawn,
