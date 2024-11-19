@@ -28,7 +28,7 @@ type CFG struct {
 
 func main() {
 	address := flag.String("a", NODATA, "адрес гофемарта")
-	accrualUrl := flag.String("r", NODATA, "адрес сервиса accrualUrl")
+	accrualURL := flag.String("r", NODATA, "адрес сервиса accrualURL")
 	uri := flag.String("d", NODATA, "адрес db")
 
 	flag.Parse()
@@ -50,13 +50,13 @@ func main() {
 		address = cfg.Address
 	}
 	if cfg.Accrual != nil {
-		accrualUrl = cfg.Accrual
+		accrualURL = cfg.Accrual
 	}
 	if cfg.DBURI != nil {
 		uri = cfg.DBURI
 	}
 
-	am, om, err := initServices(uri, accrualUrl)
+	am, om, err := initServices(uri, accrualURL)
 	if err != nil {
 		logger.Error("init services error: %v", err)
 		log.Fatal(err)
