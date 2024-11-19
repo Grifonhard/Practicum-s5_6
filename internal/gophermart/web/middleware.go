@@ -3,6 +3,7 @@ package web
 import (
 	"net/http"
 
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/auth"
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,7 @@ func Authentication(am *auth.Manager) gin.HandlerFunc {
 			return
 		}
 
-		userId, err := am.Authentication(authHeader)
+		userID, err := am.Authentication(authHeader)
 		if err == auth.ErrInvalidToken {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			c.Abort()
@@ -38,7 +39,9 @@ func Authentication(am *auth.Manager) gin.HandlerFunc {
 			return
 		}
 
-		c.Set(USERID, userId)
+		logger.Debug("middleware user id: %d", userID)
+
+		c.Set(USERID, userID)
 
 		c.Next()
 	}
