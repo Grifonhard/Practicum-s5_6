@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -43,10 +44,16 @@ type Claims struct {
 }
 
 func (m *Manager) Registration(username, password string) (string, error) {
+
+	logger.Debug("auth Registration uname: %s pw: %s", username, password)
+
 	m.muT.Lock(username)
 	defer m.muT.Unlock(username)
 
 	hashPw, err := hashPassword(password)
+
+	defer logger.Debug("auth Registration error: %+v", &err)
+
 	if err != nil {
 		return "", err
 	}
@@ -66,7 +73,13 @@ func (m *Manager) Registration(username, password string) (string, error) {
 }
 
 func (m *Manager) Login(username, password string) (string, error) {
+
+	logger.Debug("auth Login uname: %s pw: %s", username, password)
+
 	user, err := m.p.GetUser(username)
+
+	defer logger.Debug("auth Login error: %+v", &err)
+
 	if err != nil {
 		return "", err
 	}
@@ -81,7 +94,13 @@ func (m *Manager) Login(username, password string) (string, error) {
 }
 
 func (m *Manager) Authentication(token string) (string, error) {
+	
+	logger.Debug("auth Authentication")
+
 	claims, err := m.decodeToken(token)
+
+	defer logger.Debug("auth Authentication error: %+v", &err)
+
 	if err != nil {
 		return "", err
 	}

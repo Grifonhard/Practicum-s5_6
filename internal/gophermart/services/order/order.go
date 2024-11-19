@@ -33,12 +33,18 @@ func New(r *repository.DB, t *transactions.Mutex, acm *accrual.Manager) (*Manage
 	return &m, nil
 }
 
-func (m *Manager) AddOrder(userId int, orderID int) error {
+func (m *Manager) AddOrder(userID int, orderID int) error {
+
+	logger.Debug("order AddOrder userId: %d orderId: %d", userID, orderID)
+
 	err := checkLuhn(orderID)
+
+	defer logger.Debug("order AddOrder error: %+v", &err)
+
 	if err != nil {
 		return err
 	}
-	err = m.repository.InsertOrder(userId, orderID)
+	err = m.repository.InsertOrder(userID, orderID)
 
 	if errors.Is(err, repository.ErrOrderExist) {
 		order, err := m.repository.GetOrder(orderID)
@@ -46,7 +52,7 @@ func (m *Manager) AddOrder(userId int, orderID int) error {
 			logger.Error("fail while get order: %v", err)
 			return err
 		}
-		if order.UserId == userId {
+		if order.UserId == userID {
 			return ErrOrderExistThis
 		} else {
 			return fmt.Errorf("%w user id: %d", ErrOrderExistAnother, order.UserId)
@@ -56,8 +62,14 @@ func (m *Manager) AddOrder(userId int, orderID int) error {
 	return nil
 }
 
-func (m *Manager) ListOrders(userId int) ([]model.OrderDto, error) {
-	orders, err := m.repository.GetOrders(userId)
+func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
+
+	logger.Debug("order ListOrders userId: %d", userID)
+
+	orders, err := m.repository.GetOrders(userID)
+
+	defer logger.Debug("order ListOrders error: %+v", &err)
+
 	if err != nil {
 		return nil, err
 	}
@@ -88,9 +100,14 @@ func (m *Manager) ListOrders(userId int) ([]model.OrderDto, error) {
 	return ordersFront, err
 }
 
-func (m *Manager) Balance(userId int) (*model.BalanceDto, error) {
+func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 
-	ts, err := m.repository.GetTransactions(userId)
+	logger.Debug("order Balance userId: %d", userID)
+
+	ts, err := m.repository.GetTransactions(userID)
+
+	defer logger.Debug("order Balance error: %+v", &err)
+
 	if err != nil {
 		return nil, err
 	}
@@ -111,11 +128,17 @@ func (m *Manager) Balance(userId int) (*model.BalanceDto, error) {
 	}, nil
 }
 
-func (m *Manager) Withdraw(userId int, order string, sum int) error {
-	m.muTransaction.Lock(strconv.Itoa(userId))
-	defer m.muTransaction.Unlock(strconv.Itoa(userId))
+func (m *Manager) Withdraw(userID int, order string, sum int) error {
 
-	balance, err := m.Balance(userId)
+	logger.Debug("order Withdraw userId: %d order: %s sum: %d", userID, order, sum)
+
+	m.muTransaction.Lock(strconv.Itoa(userID))
+	defer m.muTransaction.Unlock(strconv.Itoa(userID))
+
+	balance, err := m.Balance(userID)
+
+	defer logger.Debug("order Withdraw error: %+v", &err)
+
 	if err != nil {
 		return err
 	}
@@ -145,12 +168,17 @@ func (m *Manager) Withdraw(userId int, order string, sum int) error {
 	// списания - это транзакции со знаком -
 	sum *= (-1)
 
-	return m.repository.InsertBalanceTransaction(userId, orderInt, sum)
+	return m.repository.InsertBalanceTransaction(userID, orderInt, sum)
 }
 
-func (m *Manager) Withdrawls(userId int) ([]model.WithdrawlDto, error) {
+func (m *Manager) Withdrawls(userID int) ([]model.WithdrawlDto, error) {
 
-	transs, err := m.repository.GetTransactions(userId)
+	logger.Debug("order Withdrawls userId: %d", userID)
+
+	transs, err := m.repository.GetTransactions(userID)
+
+	defer logger.Debug("order Withdrawls error: %+v", &err)
+
 	if err != nil {
 		return nil, err
 	}
