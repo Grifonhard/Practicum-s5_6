@@ -18,10 +18,14 @@ func (o *Order) ConvertAccrual(oA *OrderAccrual) (float64, int, error) {
 	if err != nil {
 		return 0, 0, err
 	}
-	o.Status = oA.Status
+	if oA.Status == "REGISTERED" {
+		o.Status = NEW
+	} else {
+		o.Status = oA.Status
+	}
 	var status int
 	switch o.Status {
-	case "REGISTERED":
+	case NEW:
 		status = NEWINT
 	case PROCESSING:
 		status = PROCESSINGINT
