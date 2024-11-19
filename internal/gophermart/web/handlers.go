@@ -9,7 +9,6 @@ import (
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/auth"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/order"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
 	"github.com/gin-gonic/gin"
 )
@@ -30,8 +29,8 @@ func Registration(m *auth.Manager) gin.HandlerFunc {
 
 		token, err := m.Registration(req.Login, req.Password)
 		if err != nil {
-			if errors.Is(err, storage.ErrUserExist) {
-				c.JSON(http.StatusConflict, gin.H{"error": storage.ErrUserExist.Error()})
+			if errors.Is(err, repository.ErrUserExist) {
+				c.JSON(http.StatusConflict, gin.H{"error": repository.ErrUserExist.Error()})
 				return
 			}
 			logger.Error("fail registed user: %v", err)
@@ -64,7 +63,7 @@ func Login(m *auth.Manager) gin.HandlerFunc {
 
 		token, err := m.Login(req.Login, req.Password)
 		if err != nil {
-			if errors.Is(err, auth.ErrWrongPassword) || errors.Is(err, storage.ErrUserNotExist) {
+			if errors.Is(err, auth.ErrWrongPassword) || errors.Is(err, repository.ErrUserNotFound) {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "incorrect login password pair"})
 				return
 			}
@@ -94,13 +93,13 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 			return
 		}
 
-		username, exists := c.Get("username")
+		userIDinterface, exists := c.Get(USERID)
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
 			return
 		}
 
-		usernameStr, ok := username.(string)
+		userID, ok := userIDinterface.(int)
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
 			return
@@ -118,13 +117,13 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 			return
 		}
 
-		err = m.AddOrder(usernameStr, orderIDInt)
+		err = m.AddOrder(userID, orderIDInt)
 		if err != nil {
-			if errors.Is(err, storage.ErrOrderExistThis) {
+			if errors.Is(err, order.ErrOrderExistThis) {
 				c.JSON(http.StatusOK, "success")
 				return
 			}
-			if errors.Is(err, storage.ErrOrderExistThis) {
+			if errors.Is(err, order.ErrOrderExistThis) {
 				c.JSON(http.StatusConflict, gin.H{"error": "no orders found"})
 				return
 			}
@@ -139,19 +138,19 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 
 func ListOrders(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		username, exists := c.Get("username")
+		userIDinterface, exists := c.Get(USERID)
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
 			return
 		}
 
-		usernameStr, ok := username.(string)
+		userID, ok := userIDinterface.(int)
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
 			return
 		}
 
-		orders, err := m.ListOrders(usernameStr)
+		orders, err := m.ListOrders(userID)
 		if err != nil {
 			if errors.Is(err, repository.ErrOrdersNotFound) {
 				c.JSON(http.StatusNoContent, orders)
@@ -168,19 +167,19 @@ func ListOrders(m *order.Manager) gin.HandlerFunc {
 
 func Balance(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		username, exists := c.Get("username")
+		userIDinterface, exists := c.Get(USERID)
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
 			return
 		}
 
-		usernameStr, ok := username.(string)
+		userID, ok := userIDinterface.(int)
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
 			return
 		}
 
-		balance, err := m.Balance(usernameStr)
+		balance, err := m.Balance(userID)
 		if err != nil {
 			logger.Error("fail get balance: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
@@ -193,13 +192,13 @@ func Balance(m *order.Manager) gin.HandlerFunc {
 
 func Withdraw(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		username, exists := c.Get("username")
+		userIDinterface, exists := c.Get(USERID)
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
 			return
 		}
 
-		usernameStr, ok := username.(string)
+		userID, ok := userIDinterface.(int)
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
 			return
@@ -211,7 +210,7 @@ func Withdraw(m *order.Manager) gin.HandlerFunc {
 			return
 		}
 
-		err := m.Withdraw(usernameStr, req.Order, req.Sum)
+		err := m.Withdraw(userID, req.Order, req.Sum)
 		if err != nil {
 			if errors.Is(err, order.ErrNotEnoughBalance) {
 				c.JSON(http.StatusPaymentRequired, gin.H{"error": "not anough points"})
@@ -232,19 +231,19 @@ func Withdraw(m *order.Manager) gin.HandlerFunc {
 
 func Withdrawals(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		username, exists := c.Get("username")
+		userIDinterface, exists := c.Get(USERID)
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
 			return
 		}
 
-		usernameStr, ok := username.(string)
+		userID, ok := userIDinterface.(int)
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
 			return
 		}
 
-		ws, err := m.Withdrawls(usernameStr)
+		ws, err := m.Withdrawls(userID)
 		if err != nil {
 			if errors.Is(err, repository.ErrTransNotFound) {
 				c.JSON(http.StatusNoContent, ws)

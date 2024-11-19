@@ -3,8 +3,8 @@ package web
 import (
 	"net/http"
 
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/auth"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/storage"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +27,7 @@ func Authentication(am *auth.Manager) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		if err == storage.ErrUserNotExist {
+		if err == repository.ErrUserNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			c.Abort()
 			return

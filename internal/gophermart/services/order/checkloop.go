@@ -12,6 +12,7 @@ const (
 )
 
 func (m *Manager) updateOrdersInfoLoop() {
+	logger.Info("update order loop up")
 	defer logger.Info("update orders loop down")
 	for {
 		orders, err := m.repository.GetNotComplitedOrders()

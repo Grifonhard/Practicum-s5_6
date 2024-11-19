@@ -10,7 +10,6 @@ import (
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/auth"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/order"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/order/storage"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/transactions"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/web"
 	"github.com/caarlos0/env/v10"
@@ -87,10 +86,6 @@ func initServices(uri *string) (*auth.Manager, *order.Manager, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	st, err := storage.New(db)
-	if err != nil {
-		return nil, nil, err
-	}
 	acc, err := accrual.New(*uri)
 	if err != nil {
 		return nil, nil, err
@@ -100,7 +95,7 @@ func initServices(uri *string) (*auth.Manager, *order.Manager, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	orderM, err := order.New(db, transMu, st, acc)
+	orderM, err := order.New(db, transMu, acc)
 	if err != nil {
 		return nil, nil, err
 	}
