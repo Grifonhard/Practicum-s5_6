@@ -22,11 +22,13 @@ const (
 
 type CFG struct {
 	Address *string `env:"RUN_ADDRESS"`
+	Accrual *string `env:"ACCRUAL_SYSTEM_ADDRESS"`
 	DBURI *string `env:"DATABASE_URI"`
 }
 
 func main() {
 	address := flag.String("a", NODATA, "адрес гофемарта")
+	accrual := flag.String("r", NODATA, "адрес сервиса accrual")
 	uri := flag.String("d", NODATA, "адрес db")
 
 	flag.Parse()
@@ -47,11 +49,14 @@ func main() {
 	if cfg.Address != nil {
 		address = cfg.Address
 	}
+	if cfg.Accrual != nil {
+		accrual = cfg.Accrual
+	}
 	if cfg.DBURI != nil {
 		uri = cfg.DBURI
 	}
 
-	am, om, err := initServices(uri)
+	am, om, err := initServices(uri, accrual)
 	if err != nil {
 		logger.Error("init services error: %v", err)
 		log.Fatal(err)
@@ -59,7 +64,7 @@ func main() {
 
 	router := initRouter(am, om)
 
-	logger.Debug("env addr: %s, uri: %s; flag addr: %s, uri: %s", *cfg.Address, *cfg.DBURI, *address, *uri)
+	logger.Debug("env addr: %s, uri: %s accUri: %s", *cfg.Address, *cfg.DBURI, cfg.Accrual)
 	fmt.Println("Server start")
 	log.Fatal(router.Run(*address))
 }
@@ -79,7 +84,7 @@ func initRouter(am *auth.Manager, om *order.Manager) *gin.Engine {
 	return router
 }
 
-func initServices(uri *string) (*auth.Manager, *order.Manager, error) {
+func initServices(uri, accUri *string) (*auth.Manager, *order.Manager, error) {
 	transMu, err := transactions.New()
 	if err != nil {
 		return nil, nil, err
@@ -88,7 +93,7 @@ func initServices(uri *string) (*auth.Manager, *order.Manager, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	acc, err := accrual.New(*uri)
+	acc, err := accrual.New(*accUri)
 	if err != nil {
 		return nil, nil, err
 	}

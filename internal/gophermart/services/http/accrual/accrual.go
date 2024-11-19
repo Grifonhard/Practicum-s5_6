@@ -25,7 +25,6 @@ func (m *Manager) AccrualReq(orderID int) (*model.OrderAccrual, error) {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Println(1)
 		return nil, err
 	}
 	defer resp.Body.Close()
