@@ -129,7 +129,7 @@ func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 
 func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 
-	logger.Debug("order Withdraw userId: %d order: %s sum: %d", userID, order, sum)
+	logger.Debug("order Withdraw userId: %d order: %s sum: %f", userID, order, sum)
 
 	m.muTransaction.Lock(strconv.Itoa(userID))
 	defer m.muTransaction.Unlock(strconv.Itoa(userID))
@@ -150,7 +150,13 @@ func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 		return err
 	}
 
+	// списания - это транзакции со знаком -
+	sum *= (-1)
+
 	ts, err := m.repository.GetTransactionsByOrder(orderInt)
+	if errors.Is(err, repository.ErrOrderNotFound) {
+		return m.repository.InsertBalanceTransaction(userID, orderInt, sum)
+	}
 	if err != nil {
 		return err
 	}
@@ -162,10 +168,7 @@ func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 		return ErrAlreadyDebited
 	default:
 		return ErrTooMuchTransact
-	}
-
-	// списания - это транзакции со знаком -
-	sum *= (-1)
+	}	
 
 	return m.repository.InsertBalanceTransaction(userID, orderInt, sum)
 }
