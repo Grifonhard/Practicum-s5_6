@@ -223,8 +223,8 @@ func Withdraw(m *order.Manager) gin.HandlerFunc {
 		}
 
 		var req model.WithdrawRequest
-		if err := c.ShouldBindJSON(req); err != nil {
-			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "cann't parse json"})
 			return
 		}
 
