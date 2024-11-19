@@ -170,8 +170,8 @@ func (db *DB) GetOrders(userId int) ([]model.Order, error) {
 	return orders, nil
 }
 
-func (db *DB) GetNotComplitedOrders(userId int) ([]model.Order, error) {
-	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE user_id = $1 AND status IN (0, 1)", userId)
+func (db *DB) GetNotComplitedOrders() ([]model.Order, error) {
+	rows, err := db.p.Query(context.Background(), "SELECT id, user_id, status, created_at FROM Orderu WHERE status IN (0, 1)")
 	if err != nil {
 		return nil, fmt.Errorf("failed to query orders: %v", err)
 	}

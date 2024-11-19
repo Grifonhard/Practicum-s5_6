@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	USERNAME = "username"
+	USERID = "username"
 )
 
 func Authentication(am *auth.Manager) gin.HandlerFunc {
@@ -21,7 +21,7 @@ func Authentication(am *auth.Manager) gin.HandlerFunc {
 			return
 		}
 
-		username, err := am.Authentication(authHeader)
+		userId, err := am.Authentication(authHeader)
 		if err == auth.ErrInvalidToken {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			c.Abort()
@@ -38,7 +38,7 @@ func Authentication(am *auth.Manager) gin.HandlerFunc {
 			return
 		}
 
-		c.Set(USERNAME, username)
+		c.Set(USERID, userId)
 
 		c.Next()
 	}
