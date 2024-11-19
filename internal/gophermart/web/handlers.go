@@ -2,6 +2,7 @@ package web
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -225,6 +226,7 @@ func Withdraw(m *order.Manager) gin.HandlerFunc {
 		var req model.WithdrawRequest
 		if err := c.ShouldBindJSON(req); err != nil {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid request format"})
+			fmt.Println(1111)
 			return
 		}
 
