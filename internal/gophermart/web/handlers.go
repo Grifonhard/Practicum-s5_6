@@ -132,6 +132,9 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 				c.JSON(http.StatusOK, "success")
 				return
 			}
+			if errors.Is(err, order.ErrLuhnFail) {
+				c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "wrong order number"})
+			}
 			if errors.Is(err, order.ErrOrderExistThis) {
 				c.JSON(http.StatusConflict, gin.H{"error": "no orders found"})
 				return

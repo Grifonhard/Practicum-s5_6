@@ -38,6 +38,9 @@ func (m *Manager) AddOrder(userID int, orderID int) error {
 	logger.Debug("order AddOrder userId: %d orderId: %d", userID, orderID)
 
 	err := checkLuhn(orderID)
+	if err != nil {
+		return err
+	}
 
 	defer logger.Debug("order AddOrder error: %+v", &err)
 
