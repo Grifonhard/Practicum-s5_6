@@ -56,7 +56,7 @@ func (db *DB) CreateTables() error {
 			id SERIAL PRIMARY KEY,
 			user_id INT REFERENCES Users(id) ON DELETE CASCADE,
 			order_id INT REFERENCES Orderu(id) ON DELETE CASCADE,
-			sum INT,
+			sum DOUBLE PRECISION,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
 		CREATE INDEX IF NOT EXISTS idx_order_user_id ON Orderu(user_id);
@@ -89,7 +89,7 @@ func (db *DB) InsertOrder(userID, orderID int) error {
 
 	_, err := db.p.Exec(context.Background(),
 		"INSERT INTO Orderu (user_id, id, status) VALUES ($1, $2, $3)", userID, orderID, model.NEWINT)
-	
+
 	defer logger.Debug("repository insert order error: %+v", &err)
 
 	var pgErr *pgconn.PgError
@@ -114,7 +114,7 @@ func (db *DB) UpdateOrderStatus(orderID, status int) error {
 	return nil
 }
 
-func (db *DB) InsertBalanceTransaction(userID, orderID, sum int) error {
+func (db *DB) InsertBalanceTransaction(userID, orderID int, sum float64) error {
 
 	logger.Debug("repository insert balance transaction userId: %d orderId: %d sum: %d", userID, orderID, sum)
 

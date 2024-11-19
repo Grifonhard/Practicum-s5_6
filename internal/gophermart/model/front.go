@@ -7,13 +7,13 @@ import (
 )
 
 type OrderDto struct {
-	ID         string `json:"number"`
-	Status     string `json:"status"`
-	Accrual    int    `json:"-"`
-	UploadedAt string `json:"uploaded_at"`
+	ID         string  `json:"number"`
+	Status     string  `json:"status"`
+	Accrual    float64 `json:"-"`
+	UploadedAt string  `json:"uploaded_at"`
 }
 
-func (of *OrderDto) ConvertOrder(o *Order, acc int) error {
+func (of *OrderDto) ConvertOrder(o *Order, acc float64) error {
 	of.ID = strconv.Itoa(o.ID)
 	of.Status = o.Status
 	of.Accrual = acc
@@ -22,17 +22,17 @@ func (of *OrderDto) ConvertOrder(o *Order, acc int) error {
 }
 
 type BalanceDto struct {
-	Current   int `json:"current"`
-	Withdrawn int `json:"withdrawn"`
+	Current   float64 `json:"current"`
+	Withdrawn float64 `json:"withdrawn"`
 }
 
 type WithdrawlDto struct {
-	Order       string `json:"order"`
-	Sum         int    `json:"sum"`
-	ProcessedAt string `json:"processed_at"`
+	Order       string  `json:"order"`
+	Sum         float64 `json:"sum"`
+	ProcessedAt string  `json:"processed_at"`
 }
 
-func GetWithdrawFront(order, sum int, processed time.Time) *WithdrawlDto {
+func GetWithdrawFront(order int, sum float64, processed time.Time) *WithdrawlDto {
 	var w WithdrawlDto
 	w.Order = strconv.Itoa(order)
 	w.Sum = sum
@@ -44,7 +44,7 @@ func (of OrderDto) MarshalJSON() ([]byte, error) {
 	type Alias OrderDto
 	aux := struct {
 		Alias
-		Accrual *int `json:"accrual,omitempty"`
+		Accrual *float64 `json:"accrual,omitempty"`
 	}{
 		Alias:   Alias(of),
 		Accrual: nil,
@@ -62,7 +62,7 @@ func (of *OrderDto) UnmarshalJSON(data []byte) error {
 	type Alias OrderDto
 	aux := struct {
 		Alias
-		Accrual *int `json:"accrual"`
+		Accrual *float64 `json:"accrual"`
 	}{
 		Alias: Alias(*of),
 	}
@@ -81,6 +81,6 @@ func (of *OrderDto) UnmarshalJSON(data []byte) error {
 }
 
 type WithdrawRequest struct {
-	Order string `json:"order" binding:"required"`
-	Sum   int    `json:"sum" binding:"required"`
+	Order string  `json:"order" binding:"required"`
+	Sum   float64 `json:"sum" binding:"required"`
 }

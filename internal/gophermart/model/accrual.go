@@ -7,12 +7,12 @@ import (
 )
 
 type OrderAccrual struct {
-	OrderID string `json:"order"`
-	Status  string `json:"status"`
-	Accrual int    `json:"accrual"`
+	OrderID string  `json:"order"`
+	Status  string  `json:"status"`
+	Accrual float64 `json:"accrual"`
 }
 
-func (o *Order) ConvertAccrual(oA *OrderAccrual) (int, int, error) {
+func (o *Order) ConvertAccrual(oA *OrderAccrual) (float64, int, error) {
 	var err error
 	o.ID, err = strconv.Atoi(oA.OrderID)
 	if err != nil {
