@@ -41,6 +41,7 @@ func (m *Manager) AccrualReq(orderID int) (*model.OrderAccrual, error) {
 		if err := json.Unmarshal(body, &result); err != nil {
 			return nil, err
 		}
+		logger.Warn("request to accrual: %d", orderID)
 		logger.Warn("from accrual: %+v", result)
 		return &result, nil
 
