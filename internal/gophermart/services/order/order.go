@@ -114,8 +114,12 @@ func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 
 	var sum, withdrawn float64
 
+	logger.Warn("transactions: %+v", ts)
+
 	for _, t := range ts {
-		sum += t.Sum
+		if t.Sum > 0 {
+			sum += t.Sum
+		}
 		if sum < 0 {
 			withdrawn += t.Sum
 		}

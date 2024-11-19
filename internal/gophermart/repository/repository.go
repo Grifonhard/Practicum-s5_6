@@ -116,7 +116,7 @@ func (db *DB) UpdateOrderStatus(orderID, status int) error {
 
 func (db *DB) InsertBalanceTransaction(userID, orderID int, sum float64) error {
 
-	logger.Debug("repository insert balance transaction userId: %d orderId: %d sum: %d", userID, orderID, sum)
+	logger.Debug("repository insert balance transaction userId: %d orderId: %d sum: %f", userID, orderID, sum)
 
 	_, err := db.p.Exec(context.Background(),
 		"INSERT INTO BalanceTransactions (user_id, order_id, sum) VALUES ($1, $2, $3)", userID, orderID, sum)
