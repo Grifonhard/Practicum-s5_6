@@ -84,7 +84,6 @@ func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 		order, err := m.convertToFrontOrder(&o)
 		if errors.Is(err, ErrOrderNotReady) {
 			logger.Debug("order is still processing: %v", o)
-			continue
 		}
 		if errors.Is(err, ErrOrderInvalid) {
 			logger.Debug("order is invalid: %v", o)
