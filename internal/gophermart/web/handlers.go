@@ -3,12 +3,13 @@ package web
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
+	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/repository"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/auth"
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/services/order"
-	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/model"
 	"github.com/gin-gonic/gin"
 )
 
@@ -112,9 +113,14 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
 			return
 		}
-
-		var orderID int
-		err := c.ShouldBind(&orderID)
+		rawData, err := c.GetRawData()
+		if err != nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "failed to read request body"})
+			return
+		}
+	
+		// Преобразуем тело запроса (число) в int
+		orderID, err := strconv.Atoi(string(rawData))
 		if err != nil {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "invalid request format"})
 			return
