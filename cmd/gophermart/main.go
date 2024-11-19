@@ -34,11 +34,13 @@ func main() {
 	var cfg CFG
 	err := env.Parse(&cfg)
 	if err != nil {
+		fmt.Println(err)
 		log.Fatal(err)
 	}
 
 	err = logger.InitLogger(logger.DEBUG, "")
 	if err != nil {
+		fmt.Println(err)
 		log.Fatal(err)
 	}
 
@@ -53,6 +55,7 @@ func main() {
 
 	am, om, err := initServices(uri)
 	if err != nil {
+		logger.Error("init services error: %v", err)
 		log.Fatal(err)
 	}
 
