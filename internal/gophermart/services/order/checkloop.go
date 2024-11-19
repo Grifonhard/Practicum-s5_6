@@ -9,11 +9,14 @@ import (
 
 const (
 	TIMESLEEPLOOP = 300 * time.Millisecond
+	TIMEWAITCREATETABLES = 2 * time.Minute
 )
 
 func (m *Manager) updateOrdersInfoLoop() {
 	logger.Info("update order loop up")
 	defer logger.Info("update orders loop down")
+	// при запуске ожидаем, пока таблицы создадутся
+	time.Sleep(TIMEWAITCREATETABLES)
 	for {
 		orders, err := m.repository.GetNotComplitedOrders()
 		if err != nil {
