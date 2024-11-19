@@ -210,7 +210,7 @@ func (m *Manager) convertToFrontOrder(o *model.Order) (*model.OrderDto, error) {
 	var orderFront model.OrderDto
 	var accrual int
 
-	transs, err := m.repository.GetTransactionsByOrder(o.Id)
+	transs, err := m.repository.GetTransactionsByOrder(o.ID)
 	if err != nil {
 		return nil, err
 	}

@@ -65,7 +65,7 @@ func (m *Manager) Registration(username, password string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	token, err := m.createToken(user.Id)
+	token, err := m.createToken(user.ID)
 	if err != nil {
 		return "", err
 	}
@@ -86,7 +86,7 @@ func (m *Manager) Login(username, password string) (string, error) {
 	if !checkPasswordHash(password, user.Password_hash) {
 		return "", ErrWrongPassword
 	}
-	token, err := m.createToken(user.Id)
+	token, err := m.createToken(user.ID)
 	if err != nil {
 		return "", err
 	}

@@ -23,14 +23,14 @@ const (
 )
 
 type User struct {
-	Id            int
+	ID            int
 	Username      string
 	Password_hash string
 	Created       time.Time
 }
 
 type Order struct {
-	Id      int
+	ID      int
 	UserId  int
 	Status  string
 	Created time.Time
@@ -38,7 +38,7 @@ type Order struct {
 }
 
 type BalanceTransactions struct {
-	Id      int
+	ID      int
 	UserId  int
 	OrderId int
 	Sum     int

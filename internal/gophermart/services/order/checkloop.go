@@ -36,7 +36,7 @@ func (m *Manager) updateOrderInfo(o *model.Order) error {
 	var accrual, status int
 	var isUpdate bool
 
-	info, err := m.accrual.AccrualReq(o.Id)
+	info, err := m.accrual.AccrualReq(o.ID)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (m *Manager) updateOrderInfo(o *model.Order) error {
 		if err != nil {
 			return err
 		}
-		err = m.repository.UpdateOrderStatus(o.Id, status)
+		err = m.repository.UpdateOrderStatus(o.ID, status)
 		if err != nil {
 			return err
 		}
@@ -54,7 +54,7 @@ func (m *Manager) updateOrderInfo(o *model.Order) error {
 	}
 
 	if info.Status == model.PROCESSED && isUpdate {
-		err = m.repository.InsertBalanceTransaction(o.UserId, o.Id, accrual)
+		err = m.repository.InsertBalanceTransaction(o.UserId, o.ID, accrual)
 		if err != nil {
 			return err
 		}
