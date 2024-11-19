@@ -44,8 +44,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logger.Debug("env addr: %s, uri: %s; flag addr: %s, uri: %s", *cfg.Address, *cfg.DBURI, *address, *uri)
-
 	if cfg.Address != nil {
 		address = cfg.Address
 	}
@@ -61,6 +59,7 @@ func main() {
 
 	router := initRouter(am, om)
 
+	logger.Debug("env addr: %s, uri: %s; flag addr: %s, uri: %s", *cfg.Address, *cfg.DBURI, *address, *uri)
 	fmt.Println("Server start")
 	log.Fatal(router.Run(*address))
 }
