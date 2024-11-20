@@ -44,7 +44,7 @@ func Registration(m *auth.Manager) gin.HandlerFunc {
 			token,             // Значение cookie
 			auth.EXPIREDAT*60, // Время жизни в секундах
 			"/",               // Путь, где cookie будет доступен
-			"",                // Домен 
+			"",                // Домен
 			false,             // Secure (использовать только HTTPS, если true)
 			true,              // HttpOnly (доступно только для HTTP запросов, не для JavaScript)
 		)
@@ -79,7 +79,7 @@ func Login(m *auth.Manager) gin.HandlerFunc {
 			token,             // Значение cookie
 			auth.EXPIREDAT*60, // Время жизни в секундах
 			"/",               // Путь, где cookie будет доступен
-			"",                // Домен 
+			"",                // Домен
 			false,             // Secure (использовать только HTTPS, если true)
 			true,              // HttpOnly (доступно только для HTTP запросов, не для JavaScript)
 		)
@@ -107,7 +107,7 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "failed to read request body"})
 			return
 		}
-	
+
 		// Преобразуем тело запроса (число) в int
 		orderID, err := strconv.Atoi(string(rawData))
 		if err != nil {
@@ -157,7 +157,7 @@ func ListOrders(m *order.Manager) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, orders)		
+		c.JSON(http.StatusOK, orders)
 	}
 }
 
@@ -242,7 +242,7 @@ func Withdrawals(m *order.Manager) gin.HandlerFunc {
 // getUserIDfromCtx - получает из контекста userID
 func getUserIDfromCtx(c *gin.Context) (int, error) {
 	userIDinterface, exists := c.Get(USERID)
-	if !exists {			
+	if !exists {
 		return 0, ErrUserNotFoundCtx
 	}
 	userID, ok := userIDinterface.(int)
