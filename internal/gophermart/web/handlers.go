@@ -254,8 +254,5 @@ func getUserIDfromCtx(c *gin.Context) (int, error) {
 
 // isAlreadyAddOrder - проверяет, что этот пользователь уже добавил этот заказ ранее
 func isAlreadyAddOrder(err error) bool {
-	if errors.Is(err, order.ErrOrderExistThis) {
-		return true
-	}
-	return false
+	return errors.Is(err, order.ErrOrderExistThis)
 }
