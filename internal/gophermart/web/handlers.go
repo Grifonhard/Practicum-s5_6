@@ -101,7 +101,7 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		
+
 		rawData, err := c.GetRawData()
 		if err != nil {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "failed to read request body"})
@@ -116,11 +116,11 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 		}
 
 		err = m.AddOrder(userID, orderID)
+		if isAlreadyAddOrder(err) {
+			c.JSON(http.StatusOK, "success")
+			return
+		}
 		if err != nil {
-			if errors.Is(err, order.ErrOrderExistThis) {
-				c.JSON(http.StatusOK, "success")
-				return
-			}
 			if errors.Is(err, order.ErrLuhnFail) {
 				c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "wrong order number"})
 			}
@@ -239,6 +239,7 @@ func Withdrawals(m *order.Manager) gin.HandlerFunc {
 	}
 }
 
+// getUserIDfromCtx - получает из контекста userID
 func getUserIDfromCtx(c *gin.Context) (int, error) {
 	userIDinterface, exists := c.Get(USERID)
 	if !exists {			
@@ -249,4 +250,12 @@ func getUserIDfromCtx(c *gin.Context) (int, error) {
 		return 0, ErrUserIDWrongType
 	}
 	return userID, nil
+}
+
+// isAlreadyAddOrder - проверяет, что этот пользователь уже добавил этот заказ ранее
+func isAlreadyAddOrder(err error) bool {
+	if errors.Is(err, order.ErrOrderExistThis) {
+		return true
+	}
+	return false
 }
