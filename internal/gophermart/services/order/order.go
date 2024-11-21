@@ -1,6 +1,7 @@
 package order
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sort"
@@ -41,9 +42,9 @@ func (m *Manager) AddOrder(userID int, orderID int) error {
 		return err
 	}
 
-	err = m.repository.InsertOrder(userID, orderID)
+	err = m.repository.InsertOrder(context.Background(), userID, orderID)
 	if errors.Is(err, repository.ErrOrderExist) {
-		order, err := m.repository.GetOrder(orderID)
+		order, err := m.repository.GetOrder(context.Background(), orderID)
 		if err != nil {
 			logger.Error("fail while get order: %v", err)
 			return err
@@ -60,7 +61,7 @@ func (m *Manager) AddOrder(userID int, orderID int) error {
 
 func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 
-	orders, err := m.repository.GetOrders(userID)
+	orders, err := m.repository.GetOrders(context.Background(), userID)
 
 	if err != nil {
 		return nil, err
@@ -90,7 +91,7 @@ func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 
 func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 
-	ts, err := m.repository.GetTransactions(userID)
+	ts, err := m.repository.GetTransactions(context.Background(), userID)
 
 	if err != nil {
 		return nil, err
@@ -133,13 +134,13 @@ func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 	// списания - это транзакции со знаком -
 	sum *= (-1)
 
-	ts, err := m.repository.GetTransactionsByOrder(orderInt)
+	ts, err := m.repository.GetTransactionsByOrder(context.Background(), orderInt)
 	if errors.Is(err, repository.ErrTransNotFound) {
-		err = m.repository.InsertOrder(userID, orderInt)
+		err = m.repository.InsertOrder(context.Background(), userID, orderInt)
 		if err != nil {
 			return err
 		}
-		return m.repository.InsertBalanceTransaction(userID, orderInt, sum)
+		return m.repository.InsertBalanceTransaction(context.Background(), userID, orderInt, sum)
 	}
 	if err != nil {
 		return err
@@ -152,14 +153,14 @@ func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 		return ErrAlreadyDebited
 	default:
 		return ErrTooMuchTransact
-	}	
+	}
 
-	return m.repository.InsertBalanceTransaction(userID, orderInt, sum)
+	return m.repository.InsertBalanceTransaction(context.Background(), userID, orderInt, sum)
 }
 
 func (m *Manager) Withdrawls(userID int) ([]model.WithdrawlDto, error) {
 
-	transs, err := m.repository.GetTransactions(userID)
+	transs, err := m.repository.GetTransactions(context.Background(), userID)
 
 	if err != nil {
 		return nil, err
@@ -190,18 +191,18 @@ func (m *Manager) convertToFrontOrder(o *model.Order) (*model.OrderDto, error) {
 		if err != nil {
 			return nil, err
 		}
-		return  &orderFront, nil
+		return &orderFront, nil
 	}
 
 	if o.Status == model.INVALID {
 		return nil, ErrOrderInvalid
 	}
 
-	transs, err := m.repository.GetTransactionsByOrder(o.ID)
-	if err != nil && !errors.Is(err, repository.ErrTransNotFound){
+	transs, err := m.repository.GetTransactionsByOrder(context.Background(), o.ID)
+	if err != nil && !errors.Is(err, repository.ErrTransNotFound) {
 		return nil, err
 	}
-	
+
 	for _, t := range transs {
 		accrual += t.Sum
 	}

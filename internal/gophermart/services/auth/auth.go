@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 	"time"
@@ -17,7 +18,7 @@ const (
 
 type Manager struct {
 	p         *repository.DB
-	muT		  *transactions.Mutex
+	muT       *transactions.Mutex
 	secretKey []byte
 }
 
@@ -52,11 +53,11 @@ func (m *Manager) Registration(username, password string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = m.p.InsertUser(username, hashPw)
+	err = m.p.InsertUser(context.Background(), username, hashPw)
 	if err != nil {
 		return "", err
 	}
-	user, err := m.p.GetUser(username)
+	user, err := m.p.GetUser(context.Background(), username)
 	if err != nil {
 		return "", err
 	}
@@ -69,7 +70,7 @@ func (m *Manager) Registration(username, password string) (string, error) {
 
 func (m *Manager) Login(username, password string) (string, error) {
 
-	user, err := m.p.GetUser(username)
+	user, err := m.p.GetUser(context.Background(), username)
 
 	if err != nil {
 		return "", err
@@ -91,7 +92,7 @@ func (m *Manager) Authentication(token string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	user, err := m.p.GetUserByID(claims.UserID)
+	user, err := m.p.GetUserByID(context.Background(), claims.UserID)
 	return user.ID, err
 }
 

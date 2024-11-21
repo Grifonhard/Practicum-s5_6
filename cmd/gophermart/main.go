@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -89,7 +90,7 @@ func initServices(uri, accURI *string) (*auth.Manager, *order.Manager, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	db, err := repository.New(*uri)
+	db, err := repository.New(context.Background(), *uri)
 	if err != nil {
 		return nil, nil, err
 	}
