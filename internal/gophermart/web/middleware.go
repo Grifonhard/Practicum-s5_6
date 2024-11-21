@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	USERID = "username"
+	USERID     = "username"
 	COOKIEAUTH = "auth_token"
 )
 

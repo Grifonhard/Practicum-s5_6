@@ -44,7 +44,7 @@ func Registration(m *auth.Manager) gin.HandlerFunc {
 			token,             // Значение cookie
 			auth.EXPIREDAT*60, // Время жизни в секундах
 			"/",               // Путь, где cookie будет доступен
-			"",                // Домен 
+			"",                // Домен
 			false,             // Secure (использовать только HTTPS, если true)
 			true,              // HttpOnly (доступно только для HTTP запросов, не для JavaScript)
 		)
@@ -79,7 +79,7 @@ func Login(m *auth.Manager) gin.HandlerFunc {
 			token,             // Значение cookie
 			auth.EXPIREDAT*60, // Время жизни в секундах
 			"/",               // Путь, где cookie будет доступен
-			"",                // Домен 
+			"",                // Домен
 			false,             // Secure (использовать только HTTPS, если true)
 			true,              // HttpOnly (доступно только для HTTP запросов, не для JavaScript)
 		)
@@ -96,23 +96,18 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 			return
 		}
 
-		userIDinterface, exists := c.Get(USERID)
-		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
+		userID, err := getUserIDfromCtx(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		userID, ok := userIDinterface.(int)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
-			return
-		}
 		rawData, err := c.GetRawData()
 		if err != nil {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "failed to read request body"})
 			return
 		}
-	
+
 		// Преобразуем тело запроса (число) в int
 		orderID, err := strconv.Atoi(string(rawData))
 		if err != nil {
@@ -121,11 +116,11 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 		}
 
 		err = m.AddOrder(userID, orderID)
+		if isAlreadyAddOrder(err) {
+			c.JSON(http.StatusOK, "success")
+			return
+		}
 		if err != nil {
-			if errors.Is(err, order.ErrOrderExistThis) {
-				c.JSON(http.StatusOK, "success")
-				return
-			}
 			if errors.Is(err, order.ErrLuhnFail) {
 				c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "wrong order number"})
 			}
@@ -145,15 +140,9 @@ func AddOrder(m *order.Manager) gin.HandlerFunc {
 func ListOrders(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		userIDinterface, exists := c.Get(USERID)
-		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
-			return
-		}
-
-		userID, ok := userIDinterface.(int)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
+		userID, err := getUserIDfromCtx(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -168,22 +157,16 @@ func ListOrders(m *order.Manager) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, orders)		
+		c.JSON(http.StatusOK, orders)
 	}
 }
 
 func Balance(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		userIDinterface, exists := c.Get(USERID)
-		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
-			return
-		}
-
-		userID, ok := userIDinterface.(int)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
+		userID, err := getUserIDfromCtx(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -201,15 +184,9 @@ func Balance(m *order.Manager) gin.HandlerFunc {
 func Withdraw(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		userIDinterface, exists := c.Get(USERID)
-		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
-			return
-		}
-
-		userID, ok := userIDinterface.(int)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
+		userID, err := getUserIDfromCtx(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -219,7 +196,7 @@ func Withdraw(m *order.Manager) gin.HandlerFunc {
 			return
 		}
 
-		err := m.Withdraw(userID, req.Order, req.Sum)
+		err = m.Withdraw(userID, req.Order, req.Sum)
 		if err != nil {
 			if errors.Is(err, order.ErrNotEnoughBalance) {
 				c.JSON(http.StatusPaymentRequired, gin.H{"error": "not anough points"})
@@ -241,15 +218,9 @@ func Withdraw(m *order.Manager) gin.HandlerFunc {
 func Withdrawals(m *order.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		userIDinterface, exists := c.Get(USERID)
-		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "username not found in context"})
-			return
-		}
-
-		userID, ok := userIDinterface.(int)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "username type assertion failed"})
+		userID, err := getUserIDfromCtx(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -266,4 +237,22 @@ func Withdrawals(m *order.Manager) gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, ws)
 	}
+}
+
+// getUserIDfromCtx - получает из контекста userID
+func getUserIDfromCtx(c *gin.Context) (int, error) {
+	userIDinterface, exists := c.Get(USERID)
+	if !exists {
+		return 0, ErrUserNotFoundCtx
+	}
+	userID, ok := userIDinterface.(int)
+	if !ok {
+		return 0, ErrUserIDWrongType
+	}
+	return userID, nil
+}
+
+// isAlreadyAddOrder - проверяет, что этот пользователь уже добавил этот заказ ранее
+func isAlreadyAddOrder(err error) bool {
+	return errors.Is(err, order.ErrOrderExistThis)
 }
