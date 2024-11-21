@@ -21,7 +21,7 @@ func (m *Manager) updateOrdersInfoLoop() {
 	ticker := time.NewTicker(TIMESLEEPLOOP)
 	defer ticker.Stop()
 
-	for _ = range ticker.C {
+	for range ticker.C {
 		orders, err := m.repository.GetNotComplitedOrders(context.Background())
 		if err != nil {
 			if errors.Is(err, repository.ErrOrdersNotFound) {
