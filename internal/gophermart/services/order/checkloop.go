@@ -17,24 +17,29 @@ const (
 func (m *Manager) updateOrdersInfoLoop() {
 	logger.Info("update order loop up")
 	defer logger.Info("update orders loop down")
+
+	ticker := time.NewTicker(TIMESLEEPLOOP)
+	defer ticker.Stop()
+
 	for {
-		orders, err := m.repository.GetNotComplitedOrders(context.Background())
-		if err != nil {
-			if errors.Is(err, repository.ErrOrdersNotFound) {
-				time.Sleep(TIMESLEEPLOOP)
+		select {
+		case <-ticker.C:
+			orders, err := m.repository.GetNotComplitedOrders(context.Background())
+			if err != nil {
+				if errors.Is(err, repository.ErrOrdersNotFound) {
+					continue // Нет заказов, ждем следующий тик.
+				}
+				logger.Error("fail while get not complited orders, error: %v", err)
 				continue
 			}
-			logger.Error("fail while get not complited orders, error: %v", err)
-		}
 
-		for _, o := range orders {
-			if err = m.updateOrderInfo(&o); err != nil {
-				// TODO может поломанным менять статус?
-				logger.Error("fail while check and update processing order: %v error: %v", o, err)
+			for _, o := range orders {
+				if err := m.updateOrderInfo(&o); err != nil {
+					// TODO может поломанным менять статус?
+					logger.Error("fail while check and update processing order: %v error: %v", o, err)
+				}
 			}
 		}
-
-		time.Sleep(TIMESLEEPLOOP)
 	}
 }
 
