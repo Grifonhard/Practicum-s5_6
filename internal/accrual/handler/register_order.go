@@ -24,25 +24,22 @@ type orderRegistrationRequest struct {
 func (h *Handler) OrderRegistrationHandler(c *gin.Context) {
 	var req orderRegistrationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		badRequestResponse(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 
 	if ok := validate.CheckLuhn(req.Order); !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid order",
-		})
+		err := errors.New("invalid order")
+		badRequestResponse(c, err)
 		return
 	}
 
 	number, err := strconv.ParseUint(req.Order, 10, 64)
 	if err != nil {
 		slog.ErrorContext(ctx, "order registration handle", "err", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
+		badRequestResponse(c, err)
 		return
 	}
 
