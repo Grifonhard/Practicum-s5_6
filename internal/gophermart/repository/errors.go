@@ -9,4 +9,5 @@ var (
 	ErrTransNotFound  = errors.New("transactions not found")
 	ErrUserExist      = errors.New("user exist already")
 	ErrOrderExist     = errors.New("order exist already")
+	ErrAcquire = errors.New("failed to acquire connection: ")
 )
