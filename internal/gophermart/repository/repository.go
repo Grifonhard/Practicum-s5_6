@@ -209,7 +209,7 @@ func (db *DB) GetOrders(ctx context.Context, userID int) ([]model.Order, error) 
 	}
 	defer conn.Release()
 
-	rows, err := conn.Query(ctx, "SELECT id, user_id, status, created_at FROM Orderu WHERE user_id = $1", userID)
+	rows, err := conn.Query(ctx, "SELECT id, user_id, status, created_at FROM Orderu WHERE user_id = $1 ORDER BY created_at ASC", userID)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to query orders: %v", err)
@@ -249,7 +249,7 @@ func (db *DB) GetNotComplitedOrders(ctx context.Context) ([]model.Order, error) 
 	}
 	defer conn.Release()
 
-	rows, err := conn.Query(ctx, "SELECT id, user_id, status, created_at FROM Orderu WHERE status IN (0, 1)")
+	rows, err := conn.Query(ctx, "SELECT id, user_id, status, created_at FROM Orderu WHERE status IN (0, 1) ORDER BY created_at ASC")
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to query orders: %v", err)
@@ -289,7 +289,7 @@ func (db *DB) GetTransactionsByOrder(ctx context.Context, orderID int) ([]model.
 	}
 	defer conn.Release()
 
-	rows, err := conn.Query(ctx, "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE order_id = $1", orderID)
+	rows, err := conn.Query(ctx, "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE order_id = $1 ORDER BY created_at ASC", orderID)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to query transactions: %v", err)
@@ -327,7 +327,7 @@ func (db *DB) GetTransactions(ctx context.Context, userID int) ([]model.BalanceT
 	}
 	defer conn.Release()
 
-	rows, err := conn.Query(ctx, "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE user_id = $1", userID)
+	rows, err := conn.Query(ctx, "SELECT id, user_id, order_id, sum, created_at FROM BalanceTransactions WHERE user_id = $1 ORDER BY created_at ASC", userID)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to query transactions: %v", err)

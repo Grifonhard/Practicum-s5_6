@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 
 	"github.com/Grifonhard/Practicum-s5_6/internal/gophermart/logger"
@@ -37,7 +36,6 @@ func New(r *repository.DB, t *transactions.Mutex, acm *accrual.Manager) (*Manage
 func (m *Manager) AddOrder(userID int, orderID int) error {
 
 	err := checkLuhn(orderID)
-
 	if err != nil {
 		return err
 	}
@@ -62,13 +60,9 @@ func (m *Manager) AddOrder(userID int, orderID int) error {
 func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 
 	orders, err := m.repository.GetOrders(context.Background(), userID)
-
 	if err != nil {
 		return nil, err
 	}
-	sort.Slice(orders, func(i, j int) bool {
-		return orders[i].Created.Before(orders[j].Created)
-	})
 
 	// часть получения инфы о заказах, по которым ещё нет данных
 	// собираем недостающую инфу
@@ -92,7 +86,6 @@ func (m *Manager) ListOrders(userID int) ([]model.OrderDto, error) {
 func (m *Manager) Balance(userID int) (*model.BalanceDto, error) {
 
 	ts, err := m.repository.GetTransactions(context.Background(), userID)
-
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +111,6 @@ func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 	defer m.muTransaction.Unlock(strconv.Itoa(userID))
 
 	balance, err := m.Balance(userID)
-
 	if err != nil {
 		return err
 	}
@@ -161,14 +153,9 @@ func (m *Manager) Withdraw(userID int, order string, sum float64) error {
 func (m *Manager) Withdrawls(userID int) ([]model.WithdrawlDto, error) {
 
 	transs, err := m.repository.GetTransactions(context.Background(), userID)
-
 	if err != nil {
 		return nil, err
 	}
-
-	sort.Slice(transs, func(i, j int) bool {
-		return transs[i].Created.Before(transs[j].Created)
-	})
 
 	var result []model.WithdrawlDto
 
