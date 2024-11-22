@@ -13,15 +13,15 @@ import (
 )
 
 type accrualRegistrationRequest struct {
-	Match      string `json:"match" required:"true"`
-	Reward     int64  `json:"reward" required:"true"`
-	RewardType string `json:"reward_type" required:"true"`
+	Match      string  `json:"match" required:"true"`
+	Reward     float64 `json:"reward" required:"true"`
+	RewardType string  `json:"reward_type" required:"true"`
 }
 
 func (h *Handler) AccrualRegistrationHandler(c *gin.Context) {
 	var req accrualRegistrationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		badRequestResponse(c, err)
 		return
 	}
 
@@ -51,7 +51,7 @@ func (h *Handler) AccrualRegistrationHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"accrual": accrual,
 	})
 }

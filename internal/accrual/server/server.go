@@ -27,7 +27,7 @@ func Run() {
 		ConnectTimeout: 5 * time.Second,
 	}
 
-	db, err := postgres.NewConnection(&pgCfg)
+	db, err := postgres.NewConnectionPool(&pgCfg)
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +55,7 @@ func Run() {
 	slog.Info("Connected to database", "uri", pgCfg.DatabaseURI)
 	slog.Info("Start server", "address", httpCfg.RunAddress)
 
-	accrualService.CalculateAccruals(ctx)
+	accrualService.RunAccrualsWorker(ctx)
 
 	err = http.ListenAndServe(httpCfg.RunAddress, router)
 

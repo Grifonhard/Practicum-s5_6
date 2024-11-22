@@ -4,6 +4,7 @@ import (
 	"github.com/Grifonhard/Practicum-s5_6/internal/lib/errors"
 	"github.com/gin-gonic/gin"
 	"log/slog"
+	"math"
 	"net/http"
 	"strconv"
 )
@@ -31,9 +32,15 @@ func (h *Handler) GetOrderHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"order":   order.Number,
-		"status":  order.Status,
-		"accrual": order.Accrual,
-	})
+	resp := gin.H{
+		"order":  strconv.FormatUint(order.Number, 10),
+		"status": order.Status,
+	}
+
+	if order.Accrual != nil {
+		orderAccrual := math.Round(*order.Accrual*100) / 100
+		resp["accrual"] = orderAccrual
+	}
+
+	c.JSON(http.StatusOK, resp)
 }

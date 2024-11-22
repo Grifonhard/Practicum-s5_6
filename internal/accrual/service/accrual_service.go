@@ -6,6 +6,11 @@ import (
 	"github.com/Grifonhard/Practicum-s5_6/internal/lib/helpers"
 	"log/slog"
 	"strings"
+	"time"
+)
+
+const (
+	accrualsWorkerDelay = 500 * time.Millisecond
 )
 
 type accrualRepository interface {
@@ -41,12 +46,15 @@ func (s *AccrualService) RegisterAccrual(ctx context.Context, accrual model.Accr
 	return s.accrualRepo.RegisterAccrual(ctx, accrual)
 }
 
-func (s *AccrualService) CalculateAccruals(ctx context.Context) {
-	go s.calculateAccruals(ctx)
+func (s *AccrualService) RunAccrualsWorker(ctx context.Context) {
+	go s.runAccrualsWorker(ctx)
 }
 
-func (s *AccrualService) calculateAccruals(ctx context.Context) {
-	for {
+func (s *AccrualService) runAccrualsWorker(ctx context.Context) {
+	ticker := time.NewTicker(accrualsWorkerDelay)
+	defer ticker.Stop()
+
+	for range ticker.C {
 		select {
 		case <-ctx.Done():
 			return
@@ -71,7 +79,7 @@ func (s *AccrualService) calculateAccruals(ctx context.Context) {
 				slog.ErrorContext(ctx, "update order status", "err", err)
 			}
 
-			var orderAccrual uint64
+			var orderAccrual float64
 			for _, accrual := range accruals {
 				match := strings.ToLower(accrual.Match)
 

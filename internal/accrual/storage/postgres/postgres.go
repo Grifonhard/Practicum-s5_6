@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewConnection(cfg *config.PostgresConfig) (*pgxpool.Pool, error) {
+func NewConnectionPool(cfg *config.PostgresConfig) (*pgxpool.Pool, error) {
 	connCtx, cancel := context.WithTimeoutCause(context.Background(), cfg.ConnectTimeout, errors.ErrConnectTimeout)
 	defer cancel()
 	conn, err := pgxpool.New(connCtx, cfg.DatabaseURI)
@@ -20,8 +20,14 @@ func NewConnection(cfg *config.PostgresConfig) (*pgxpool.Pool, error) {
 	return conn, nil
 }
 
-func CreateSchema(ctx context.Context, db *pgxpool.Pool) error {
-	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+func CreateSchema(ctx context.Context, connPool *pgxpool.Pool) error {
+	conn, err := connPool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	tx, err := conn.BeginTx(ctx, pgx.TxOptions{})
 	defer tx.Rollback(ctx)
 
 	if err != nil {
@@ -36,8 +42,14 @@ func CreateSchema(ctx context.Context, db *pgxpool.Pool) error {
 	return tx.Commit(ctx)
 }
 
-func CreateTables(ctx context.Context, db *pgxpool.Pool) error {
-	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+func CreateTables(ctx context.Context, connPool *pgxpool.Pool) error {
+	conn, err := connPool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	tx, err := conn.BeginTx(ctx, pgx.TxOptions{})
 	defer tx.Rollback(ctx)
 
 	if err != nil {
@@ -48,13 +60,13 @@ func CreateTables(ctx context.Context, db *pgxpool.Pool) error {
         CREATE TABLE IF NOT EXISTS accrual.orders (
             number bigint PRIMARY KEY,
             status character varying(255),
-            accrual int,
+            accrual double precision,
             created_at timestamp with time zone
         );
         CREATE TABLE IF NOT EXISTS accrual.goods (
             id SERIAL PRIMARY KEY,
             description text NOT NULL,
-            price bigint NOT NULL,
+            price double precision NOT NULL,
             order_number bigint NOT NULL,
             created_at timestamp with time zone
         );
@@ -74,6 +86,6 @@ func CreateTables(ctx context.Context, db *pgxpool.Pool) error {
 	return tx.Commit(ctx)
 }
 
-func Close(db *pgxpool.Pool) {
-	db.Close()
+func Close(connPool *pgxpool.Pool) {
+	connPool.Close()
 }

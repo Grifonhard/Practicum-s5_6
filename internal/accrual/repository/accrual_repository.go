@@ -11,19 +11,25 @@ import (
 )
 
 type AccrualRepository struct {
-	db *pgxpool.Pool
+	connPool *pgxpool.Pool
 }
 
-func NewAccrualRepository(db *pgxpool.Pool) *AccrualRepository {
+func NewAccrualRepository(connPool *pgxpool.Pool) *AccrualRepository {
 	return &AccrualRepository{
-		db: db,
+		connPool: connPool,
 	}
 }
 
 func (r *AccrualRepository) RegisterAccrual(ctx context.Context, accrual model.AccrualProgram) error {
 	query := "INSERT INTO accrual.accrual_programs (match, reward, reward_type, created_at) VALUES ($1, $2, $3, $4)"
 
-	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	conn, err := r.connPool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	tx, err := conn.BeginTx(ctx, pgx.TxOptions{})
 	defer tx.Rollback(ctx)
 
 	if err != nil {
@@ -40,23 +46,22 @@ func (r *AccrualRepository) RegisterAccrual(ctx context.Context, accrual model.A
 
 func (r *AccrualRepository) GetAllAccrualPrograms(ctx context.Context) ([]model.AccrualProgram, error) {
 	query := "SELECT * FROM accrual.accrual_programs"
+	conn, err := r.connPool.Acquire(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("acquire connection: %w", err)
+	}
+	defer conn.Release()
 
-	rows, err := r.db.Query(ctx, query)
+	rows, err := conn.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("select accruals: %w", err)
 	}
+	defer rows.Close()
 
-	var accruals []model.AccrualProgram
-	for rows.Next() {
-		accrual := model.AccrualProgram{}
-		err = rows.Scan(&accrual.ID, &accrual.Match, &accrual.Reward, &accrual.RewardType, &accrual.CreatedAt)
-		if err != nil {
-			return nil, fmt.Errorf("unable to scan row: %w", err)
-		}
-		accruals = append(accruals, accrual)
+	accruals, err := pgx.CollectRows(rows, pgx.RowToStructByName[model.AccrualProgram])
+	if err != nil {
+		return nil, fmt.Errorf("collect rows: %w", err)
 	}
-
-	rows.Close()
 
 	return accruals, nil
 }

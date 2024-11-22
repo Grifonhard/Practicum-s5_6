@@ -2,10 +2,12 @@ package handler
 
 import (
 	"errors"
-	"github.com/Grifonhard/Practicum-s5_6/internal/lib/validate"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
+
+	"github.com/Grifonhard/Practicum-s5_6/internal/lib/validate"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -15,29 +17,33 @@ import (
 )
 
 type orderRegistrationRequest struct {
-	Order uint64       `json:"order"`
+	Order string       `json:"order"`
 	Goods []model.Good `json:"goods"`
 }
 
 func (h *Handler) OrderRegistrationHandler(c *gin.Context) {
 	var req orderRegistrationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		badRequestResponse(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 
-	number := strconv.FormatUint(req.Order, 10)
-
-	if ok := validate.CheckLuhn(number); !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid order",
-		})
+	if ok := validate.CheckLuhn(req.Order); !ok {
+		err := errors.New("invalid order")
+		badRequestResponse(c, err)
 		return
 	}
 
-	err := h.OrderService.RegisterOrder(ctx, req.Order, req.Goods)
+	number, err := strconv.ParseUint(req.Order, 10, 64)
+	if err != nil {
+		slog.ErrorContext(ctx, "order registration handle", "err", err)
+		badRequestResponse(c, err)
+		return
+	}
+
+	err = h.OrderService.RegisterOrder(ctx, number, req.Goods)
 
 	if err != nil {
 		slog.ErrorContext(ctx, "order registration handle", "err", err)
@@ -55,6 +61,8 @@ func (h *Handler) OrderRegistrationHandler(c *gin.Context) {
 		})
 		return
 	}
+
+	fmt.Printf("order num registed: %d\n", number)
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"number": req.Order,
