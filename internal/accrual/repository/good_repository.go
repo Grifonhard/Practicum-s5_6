@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 	"github.com/Grifonhard/Practicum-s5_6/internal/accrual/model"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type GoodRepository struct {
-	db *pgxpool.Pool
+	connPool *pgxpool.Pool
 }
 
-func NewGoodRepository(db *pgxpool.Pool) *GoodRepository {
+func NewGoodRepository(connPool *pgxpool.Pool) *GoodRepository {
 	return &GoodRepository{
-		db: db,
+		connPool: connPool,
 	}
 }
 
@@ -24,21 +25,21 @@ func (r *GoodRepository) GetGoodsOfOrdersByStatus(ctx context.Context, orderStat
         JOIN accrual.goods AS goods ON goods.order_number = orders.number
         WHERE orders.status = $1
     `
+	conn, err := r.connPool.Acquire(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("acquire connection: %w", err)
+	}
+	defer conn.Release()
 
-	rows, err := r.db.Query(ctx, query, orderStatus)
+	rows, err := conn.Query(ctx, query, orderStatus)
 	if err != nil {
 		return nil, fmt.Errorf("select goods: %w", err)
 	}
 	defer rows.Close()
 
-	var goods []model.Good
-	for rows.Next() {
-		good := model.Good{}
-		err = rows.Scan(&good.ID, &good.Description, &good.Price, &good.OrderNumber, &good.CreatedAt)
-		if err != nil {
-			return nil, fmt.Errorf("unable to scan row: %w", err)
-		}
-		goods = append(goods, good)
+	goods, err := pgx.CollectRows(rows, pgx.RowToStructByName[model.Good])
+	if err != nil {
+		return nil, fmt.Errorf("collect rows: %w", err)
 	}
 
 	return goods, nil

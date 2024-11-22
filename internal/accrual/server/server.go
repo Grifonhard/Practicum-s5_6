@@ -27,7 +27,7 @@ func Run() {
 		ConnectTimeout: 5 * time.Second,
 	}
 
-	db, err := postgres.NewConnection(&pgCfg)
+	db, err := postgres.NewConnectionPool(&pgCfg)
 	if err != nil {
 		panic(err)
 	}
